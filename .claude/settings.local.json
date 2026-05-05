@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__momorph__get_frame",
+      "mcp__momorph__get_frame_image",
+      "mcp__momorph__get_media_files",
+      "mcp__momorph__get_design_item_image",
+      "mcp__momorph__list_frame_styles",
+      "mcp__momorph__list_design_items",
+      "mcp__momorph__get_frame_node_tree",
+      "mcp__momorph__list_frames",
+      "Bash(curl:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "context7",
+    "momorph",
+    "playwright",
+    "testViewpoints"
+  ]
+}
