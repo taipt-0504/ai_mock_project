@@ -46,3 +46,6 @@ next-env.d.ts
 # Added by MoMorph
 .mcp.json
 mcp.json
+
+# claude settings
+.claude/settings.local.json
