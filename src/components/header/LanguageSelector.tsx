@@ -1,33 +1,206 @@
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
+
+import {
+  LOCALE_DISPLAY,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/src/lib/i18n/types";
+
+const COOKIE_NAME = "saa_locale";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1y, mirrors setSaaLocale.
+
+type Props = {
+  locale: SupportedLocale;
+  /**
+   * When true, the component POSTs the new locale to `/api/i18n/locale` so
+   * `User.locale` stays in sync across devices. Unauthenticated visitors
+   * persist via the `saa_locale` cookie only.
+   */
+  isAuthenticated?: boolean;
+};
 
 /**
- * Static chip-only placeholder for the FR-007 language selector.
- * Interactive disclosure dropdown lands in Phase 5 (US3) per plan.md.
+ * FR-007 language selector. Disclosure pattern with keyboard navigation
+ * (ArrowUp / ArrowDown / Enter / Escape), focus trap while open, and
+ * click-outside-to-close. Selection is optimistic; for authenticated users
+ * the result is reverted if `/api/i18n/locale` fails.
  */
-export default function LanguageSelector() {
+export default function LanguageSelector({
+  locale,
+  isAuthenticated = false,
+}: Props) {
+  const router = useRouter();
+  const menuId = useId();
+
+  const [optimisticLocale, setOptimisticLocale] = useState<SupportedLocale>(locale);
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(() =>
+    Math.max(0, SUPPORTED_LOCALES.indexOf(locale)),
+  );
+
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Click-outside closes the menu.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (
+        triggerRef.current?.contains(target) ||
+        menuRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsOpen(false);
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [isOpen]);
+
+  // Move focus to the active menu item while open; back to the trigger on close.
+  useEffect(() => {
+    if (isOpen) {
+      const items = menuRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"]',
+      );
+      items?.[activeIndex]?.focus();
+    }
+  }, [isOpen, activeIndex]);
+
+  const writeClientCookie = useCallback((target: SupportedLocale) => {
+    document.cookie = `${COOKIE_NAME}=${target}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+  }, []);
+
+  const commit = useCallback(
+    async (target: SupportedLocale) => {
+      const previous = optimisticLocale;
+      setOptimisticLocale(target);
+      setIsOpen(false);
+      writeClientCookie(target);
+      router.refresh();
+
+      if (!isAuthenticated) return;
+
+      try {
+        const response = await fetch("/api/i18n/locale", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ locale: target }),
+        });
+        if (!response.ok) throw new Error(`status ${response.status}`);
+      } catch {
+        // Revert chip + cookie so the UI matches the persisted truth.
+        setOptimisticLocale(previous);
+        writeClientCookie(previous);
+      }
+    },
+    [optimisticLocale, isAuthenticated, router, writeClientCookie],
+  );
+
+  const onTriggerKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "ArrowDown" || e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      setIsOpen(true);
+    }
+  };
+
+  const onMenuKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % SUPPORTED_LOCALES.length);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(
+        (i) => (i - 1 + SUPPORTED_LOCALES.length) % SUPPORTED_LOCALES.length,
+      );
+      return;
+    }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      void commit(SUPPORTED_LOCALES[activeIndex]);
+    }
+  };
+
+  const display = LOCALE_DISPLAY[optimisticLocale];
+
   return (
-    <button
-      type="button"
-      aria-label="Language: VN"
-      className="flex h-14 w-[108px] items-center justify-between gap-0.5 rounded p-4"
-    >
-      <span className="flex h-6 w-[53px] items-center gap-1">
+    <div className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-controls={menuId}
+        aria-label={`Language: ${display.chip}`}
+        onClick={() => setIsOpen((v) => !v)}
+        onKeyDown={onTriggerKeyDown}
+        className="flex h-14 w-[108px] items-center justify-between gap-0.5 rounded p-4"
+      >
+        <span className="flex h-6 w-[53px] items-center gap-1">
+          <Image src={display.flagAsset} alt="" width={24} height={24} />
+          <span className="font-display text-base font-bold leading-6 tracking-[0.15px] text-saa-page-fg">
+            {display.chip}
+          </span>
+        </span>
         <Image
-          src="/assets/header/icons/flag-vn.svg"
+          src="/assets/header/icons/chevron-down.svg"
           alt=""
           width={24}
           height={24}
+          className={isOpen ? "rotate-180 transition-transform" : "transition-transform"}
         />
-        <span className="font-display text-base font-bold leading-6 tracking-[0.15px] text-saa-page-fg">
-          VN
-        </span>
-      </span>
-      <Image
-        src="/assets/header/icons/chevron-down.svg"
-        alt=""
-        width={24}
-        height={24}
-      />
-    </button>
+      </button>
+      {isOpen && (
+        <div
+          ref={menuRef}
+          id={menuId}
+          role="menu"
+          aria-label="Language"
+          onKeyDown={onMenuKeyDown}
+          className="absolute right-0 top-full z-20 mt-2 flex w-[140px] flex-col rounded-md border border-saa-divider bg-saa-page py-1 shadow-lg"
+        >
+          {SUPPORTED_LOCALES.map((option, index) => {
+            const item = LOCALE_DISPLAY[option];
+            const isCurrent = option === optimisticLocale;
+            return (
+              <button
+                key={option}
+                role="menuitem"
+                type="button"
+                aria-current={isCurrent ? "true" : undefined}
+                tabIndex={index === activeIndex ? 0 : -1}
+                onClick={() => void commit(option)}
+                onMouseEnter={() => setActiveIndex(index)}
+                className="flex items-center gap-2 px-4 py-2 text-left font-display text-base font-bold text-saa-page-fg hover:bg-saa-header-overlay aria-[current=true]:opacity-80"
+              >
+                <Image src={item.flagAsset} alt="" width={24} height={24} />
+                <span>{item.chip}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

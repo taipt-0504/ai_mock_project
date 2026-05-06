@@ -17,6 +17,29 @@ const eslintConfig = defineConfig([
     "test-results/**",
     "coverage/**",
   ]),
+  // Constitution Principle IV — no `console.*` outside the logger module.
+  // Allowed exceptions: the logger itself (the actual emitter), the seed
+  // script (a CLI tool), and the Login client error boundary (the server
+  // logger can't run there — it uses node:async_hooks).
+  {
+    rules: {
+      "no-console": "error",
+    },
+  },
+  {
+    files: [
+      "src/lib/logger.ts",
+      "prisma/seed.ts",
+      "app/login/error.tsx",
+      "app/global-error.tsx",
+      "tests/**/*",
+      "vitest.setup.ts",
+      "scripts/**/*",
+    ],
+    rules: {
+      "no-console": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

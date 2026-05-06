@@ -1,0 +1,10 @@
+{
+  "program.title": "ROOT FURTHER",
+  "program.description1": "Start your journey with SAA 2025.",
+  "program.description2": "Sign in to explore!",
+  "loginButton.label": "LOGIN With Google",
+  "loginButton.errorGeneric": "We couldn't sign you in. Please try again.",
+  "loginButton.errorCookies": "Cookies are blocked. Please enable cookies for this site and try again.",
+  "loginButton.errorCancelled": "Google sign-in was cancelled.",
+  "footer.copyright": "© 2025 Sun* — All rights reserved."
+}

@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sun Annual Awards 2025 (SAA 2025)
 
-## Getting Started
+Internal Next.js application for the **Sun Annual Awards 2025** program.
+Built with Next.js 16 App Router, React 19, TypeScript, Tailwind v4,
+Auth.js v5 (Google OAuth + Prisma database sessions), and PostgreSQL.
 
-First, run the development server:
+## Documentation
+
+- [Local development guide](./docs/local-dev.md) — start here.
+- [Auth.js + Google Cloud setup](./docs/auth-setup.md) — provisioning the
+  OAuth client and `AUTH_SECRET`.
+- [Project constitution](./.momorph/constitution.md) — non-negotiable
+  standards: tech stack, layering, security baseline, testing discipline.
+- Login feature spec & plan:
+  [`spec.md`](./.momorph/specs/GzbNeVGJHz-login/spec.md) ·
+  [`plan.md`](./.momorph/specs/GzbNeVGJHz-login/plan.md) ·
+  [`tasks.md`](./.momorph/specs/GzbNeVGJHz-login/tasks.md).
+
+## Quickstart
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up -d db          # local Postgres on :5432
+cp .env.example .env.local       # then fill in secrets — see docs/auth-setup.md
+set -a && source .env.local && set +a && npm run db:migrate
+npm run dev                      # http://localhost:3000 → /login
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the tests with `npm run test` (Vitest) and `npm run test:e2e`
+(Playwright). See [`docs/local-dev.md`](./docs/local-dev.md) for details.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Layer        | Choice                                        |
+| ------------ | --------------------------------------------- |
+| Framework    | Next.js 16.2 App Router (Turbopack)           |
+| UI           | React 19, Tailwind CSS v4                     |
+| Type system  | TypeScript 5 (strict)                         |
+| Auth         | Auth.js v5 (NextAuth) + `@auth/prisma-adapter`|
+| Database     | PostgreSQL 15 + Prisma ORM                    |
+| Validation   | Zod                                           |
+| Test         | Vitest + Playwright + React Testing Library   |
+| Lint         | ESLint 9 (`eslint-config-next`)               |
 
-## Learn More
+Constitution-mandated rules are enforced in lint + tests:
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Only `src/lib/config.ts` may read `process.env`.
+- Only `src/lib/logger.ts` may emit `console.*`.
+- Auth.js uses **database sessions** (not JWT) — every sign-in writes a
+  `Session` row.
+- Every test pair is authored *before* its production code (TDD).

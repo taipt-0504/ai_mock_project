@@ -1,28 +1,56 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
 import Footer from "@/src/components/footer/Footer";
 import Header from "@/src/components/header/Header";
 import HeroSection from "@/src/components/login/HeroSection";
+import { auth } from "@/src/lib/auth";
+import { getSaaLocale } from "@/src/lib/cookies/saa-locale";
+import { DEFAULT_LOCALE, type SupportedLocale } from "@/src/lib/i18n/types";
+import { logger } from "@/src/lib/logger";
+
+// Login MUST be rendered at request time so the auth check below runs on
+// every visit (spec State Management § Cache & invalidation). Without this
+// flag Next.js may statically prerender and serve the page to authenticated
+// users without a redirect.
+export const dynamic = "force-dynamic";
 
 /**
- * Login page (FRAME GzbNeVGJHz). Background composition mirrors the Figma
- * layer stack:
+ * Login page (FRAME GzbNeVGJHz).
  *
- *   1. Solid page background (`bg-saa-page` — #00101A)
- *   2. Key visual artwork (decorative)
- *   3. Left-to-right dark gradient (fades artwork on the left)
- *   4. Bottom-up dark gradient (fades artwork to dark at the bottom)
- *   5. Header   — anchored top
- *   6. Hero     — vertically centered between header and footer
- *   7. Footer   — anchored bottom
- *
- * Auth check (FR-002 server-side redirect) and locale resolution land in
- * task T050 — see plan.md Phase 3.
+ * Server-side gate (FR-002 / US2 / TR-001): if a session exists, redirect
+ * to `/` BEFORE any markup is sent. If the session lookup itself errors
+ * (DB outage), fall through to render Login as unauthenticated and log the
+ * failure — never 5xx the user (spec State Management § Loading & error
+ * states + edge case "Stale or revoked session").
  */
-export default function LoginPage() {
+export default async function LoginPage() {
+  let hasSession = false;
+  try {
+    const session = await auth();
+    hasSession = Boolean(session?.user);
+  } catch (err) {
+    logger.warn("auth.lookup-failed", {
+      message: err instanceof Error ? err.message : "unknown",
+    });
+  }
+
+  if (hasSession) {
+    redirect("/");
+  }
+
+  let locale: SupportedLocale = DEFAULT_LOCALE;
+  try {
+    locale = await getSaaLocale();
+  } catch (err) {
+    logger.warn("locale.cookie-read-failed", {
+      message: err instanceof Error ? err.message : "unknown",
+    });
+  }
+
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-saa-page text-saa-page-fg">
-      {/* Layer 2 — key visual artwork */}
+      {/* Background layer 2 — key visual artwork (decorative). */}
       <div aria-hidden="true" className="absolute inset-0 z-0">
         <Image
           src="/assets/login/images/key-visual.png"
@@ -32,23 +60,20 @@ export default function LoginPage() {
           className="object-cover"
         />
       </div>
-      {/* Layer 3 — left-to-right dark fade */}
+      {/* Background layer 3 — left-to-right dark fade. */}
       <div
         aria-hidden="true"
         className="saa-overlay-fade-left absolute inset-0 z-[1]"
       />
-      {/* Layer 4 — bottom-up dark fade */}
+      {/* Background layer 4 — bottom-up dark fade. */}
       <div
         aria-hidden="true"
         className="saa-overlay-fade-bottom absolute inset-x-0 bottom-0 z-[2] h-[1093px]"
       />
 
-      {/* Layer 5 — Header */}
-      <Header />
-      {/* Layer 6 — Hero */}
-      <HeroSection />
-      {/* Layer 7 — Footer */}
-      <Footer />
+      <Header locale={locale} />
+      <HeroSection locale={locale} />
+      <Footer locale={locale} />
     </main>
   );
 }

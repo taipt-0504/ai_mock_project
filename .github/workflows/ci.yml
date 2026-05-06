@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel an in-progress run if a new commit lands on the same branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-type:
+    name: Lint + type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+
+  unit:
+    name: Unit + integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: saa2025
+          POSTGRES_PASSWORD: saa2025
+          POSTGRES_DB: saa2025_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saa2025"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://saa2025:saa2025@localhost:5432/saa2025_test
+      DATABASE_URL_TEST: postgres://saa2025:saa2025@localhost:5432/saa2025_test
+      AUTH_SECRET: ci-only-placeholder-secret-32-bytes-min
+      AUTH_GOOGLE_ID: ci-placeholder-id
+      AUTH_GOOGLE_SECRET: ci-placeholder-secret
+      AUTH_TRUST_HOST: 'true'
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - run: npm run test
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.59.1-jammy
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: saa2025
+          POSTGRES_PASSWORD: saa2025
+          POSTGRES_DB: saa2025_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saa2025"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://saa2025:saa2025@postgres:5432/saa2025_test
+      DATABASE_URL_TEST: postgres://saa2025:saa2025@postgres:5432/saa2025_test
+      AUTH_SECRET: ci-only-placeholder-secret-32-bytes-min
+      AUTH_GOOGLE_ID: ci-placeholder-id
+      AUTH_GOOGLE_SECRET: ci-placeholder-secret
+      AUTH_TRUST_HOST: 'true'
+      NODE_ENV: test
+      PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: ci-test-db-reset
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run db:test:reset
+      - name: Build the app
+        run: npm run build
+      - name: Run E2E
+        run: npm run test:e2e
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 14

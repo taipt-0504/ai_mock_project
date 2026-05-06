@@ -1,0 +1,10 @@
+{
+  "program.title": "ROOT FURTHER",
+  "program.description1": "Bắt đầu hành trình của bạn cùng SAA 2025.",
+  "program.description2": "Đăng nhập để khám phá!",
+  "loginButton.label": "LOGIN With Google",
+  "loginButton.errorGeneric": "Không thể đăng nhập. Vui lòng thử lại.",
+  "loginButton.errorCookies": "Trình duyệt đang chặn cookie. Vui lòng cho phép cookie và thử lại.",
+  "loginButton.errorCancelled": "Bạn đã hủy đăng nhập với Google.",
+  "footer.copyright": "Bản quyền thuộc về Sun* © 2025"
+}

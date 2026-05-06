@@ -49,3 +49,9 @@ mcp.json
 
 # claude settings
 .claude/settings.local.json
+
+# Lighthouse npm package leaks Windows-style temp paths into the project root
+# when run on non-Windows hosts; ignore them so the dev server doesn't trip
+# on the path during the next build.
+C:
+"C:*"

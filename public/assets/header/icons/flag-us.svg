@@ -1,0 +1,41 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_us)">
+<rect x="2" y="5" width="20" height="15" fill="#F7FCFF"/>
+<path d="M2 5h20v1.15H2zM2 7.31h20v1.15H2zM2 9.62h20v1.15H2zM2 11.92h20v1.15H2zM2 14.23h20v1.15H2zM2 16.54h20v1.15H2zM2 18.85h20V20H2z" fill="#E31D1C"/>
+<rect x="2" y="5" width="9" height="8.08" fill="#3D58DB"/>
+<g fill="#FFFFFF">
+<circle cx="3.5" cy="6.3" r="0.4"/>
+<circle cx="5.0" cy="6.3" r="0.4"/>
+<circle cx="6.5" cy="6.3" r="0.4"/>
+<circle cx="8.0" cy="6.3" r="0.4"/>
+<circle cx="9.5" cy="6.3" r="0.4"/>
+<circle cx="4.25" cy="7.4" r="0.4"/>
+<circle cx="5.75" cy="7.4" r="0.4"/>
+<circle cx="7.25" cy="7.4" r="0.4"/>
+<circle cx="8.75" cy="7.4" r="0.4"/>
+<circle cx="3.5" cy="8.5" r="0.4"/>
+<circle cx="5.0" cy="8.5" r="0.4"/>
+<circle cx="6.5" cy="8.5" r="0.4"/>
+<circle cx="8.0" cy="8.5" r="0.4"/>
+<circle cx="9.5" cy="8.5" r="0.4"/>
+<circle cx="4.25" cy="9.6" r="0.4"/>
+<circle cx="5.75" cy="9.6" r="0.4"/>
+<circle cx="7.25" cy="9.6" r="0.4"/>
+<circle cx="8.75" cy="9.6" r="0.4"/>
+<circle cx="3.5" cy="10.7" r="0.4"/>
+<circle cx="5.0" cy="10.7" r="0.4"/>
+<circle cx="6.5" cy="10.7" r="0.4"/>
+<circle cx="8.0" cy="10.7" r="0.4"/>
+<circle cx="9.5" cy="10.7" r="0.4"/>
+<circle cx="4.25" cy="11.8" r="0.4"/>
+<circle cx="5.75" cy="11.8" r="0.4"/>
+<circle cx="7.25" cy="11.8" r="0.4"/>
+<circle cx="8.75" cy="11.8" r="0.4"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_us">
+<rect x="2" y="5" width="20" height="15" fill="white"/>
+</clipPath>
+</defs>
+</svg>

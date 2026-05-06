@@ -10,8 +10,13 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    globalSetup: ['./tests/global-setup.ts'],
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}', 'tests/integration/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['tests/e2e/**', 'node_modules/**', '.next/**'],
     css: true,
+    // DB-touching test files share `clearAuthTables`; running them in parallel
+    // would cause cross-file teardown collisions. Suite is small enough that
+    // serial execution is fine.
+    fileParallelism: false,
   },
 });
