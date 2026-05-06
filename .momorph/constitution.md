@@ -1,43 +1,42 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: (none) → 1.0.0
-Type: Initial ratification
+Version change: 1.1.0 → 1.1.1
+Type: PATCH — TODO(TESTING_INSTALL) retired after the testing toolchain was scaffolded; one
+      runtime-environment note added (Node 20+ requirement). No normative rule changes.
 
-Modified principles: N/A (initial draft)
-Added principles:
-  - I. Clean Code & Readable Structure (NON-NEGOTIABLE)
-  - II. Stack Best Practices (Next.js / React / TypeScript / Tailwind)
-  - III. Platform-Appropriate UI Patterns
-  - IV. OWASP Secure Coding (NON-NEGOTIABLE)
-  - V. Test-Driven Development (NON-NEGOTIABLE)
+Modified principles: N/A (rules unchanged)
+Modified sections:
+  - Technology Stack & Constraints — Testing line updated from "installation pending" to
+    concrete config files and scripts; a Node version requirement note added.
 
-Added sections:
-  - Technology Stack & Constraints
-  - Development Workflow & Quality Gates
-  - Governance
+Added principles: N/A
+Added sections: N/A
+Removed sections: N/A
 
-Removed sections: N/A (initial draft)
+Templates audited (no changes needed):
+  - .momorph/templates/plan-template.md     ✅
+  - .momorph/templates/spec-template.md     ✅
+  - .momorph/templates/tasks-template.md    ✅
 
-Templates audited:
-  - .momorph/templates/plan-template.md     ✅ updated (Constitution Compliance Check rewritten to reference principles by ID)
-  - .momorph/templates/spec-template.md     ✅ aligned (already uses MUST language; visual/responsive + accessibility hooks present)
-  - .momorph/templates/tasks-template.md    ✅ aligned (TDD ordering and security/polish phase already present)
-  - .momorph/guidelines/frontend.md         ✅ aligned (referenced from Principles I–III)
-  - .momorph/guidelines/backend.md          ✅ aligned (referenced from Principles I–II, IV)
-  - .momorph/guidelines/db_guidelines/      ✅ referenced — selection deferred (see TODO below)
-  - README.md                                ✅ no constitution references — no update needed
+Resolved TODOs:
+  - TODO(ORM_CHOICE):       RESOLVED 2026-05-06 — Prisma + PostgreSQL; Auth.js + Prisma adapter.
+  - TODO(TESTING_INSTALL):  RESOLVED 2026-05-06 — Vitest 4 + React Testing Library + jsdom +
+    @vitejs/plugin-react installed; Playwright 1.59 + chromium installed. Configs at
+    `vitest.config.ts`, `vitest.setup.ts`, `playwright.config.ts`. Scripts: `test`,
+    `test:watch`, `test:e2e`, `test:e2e:ui`. Smoke tests (`tests/unit/smoke.test.ts`,
+    `tests/e2e/smoke.spec.ts`) pass under Vitest. Playwright requires system libs
+    (`libnspr4`, `libnss3`, etc.) — run `sudo npx playwright install-deps chromium` once per
+    workstation, or use a CI image with the libs preinstalled.
 
-Follow-up TODOs (deferred items):
-  - TODO(ORM_CHOICE): Persistence stack not yet chosen. Pick one of the documented options under
-    .momorph/guidelines/db_guidelines/ (Prisma, Mongoose, MikroORM) and amend Technology Stack via a
-    MINOR bump before any persistent feature is implemented.
-  - TODO(TESTING_INSTALL): Vitest + Playwright is the stated default but neither is installed in
-    package.json. Install and scaffold the runners before the first feature exits Phase 2 of any
-    plan; otherwise a justified waiver MUST be added to that plan's Violations table.
-  - TODO(NATIVE_PLATFORMS): Principle III references Material Design (Android) and Human Interface
-    Guidelines (iOS) for forward compatibility. The current codebase is web-only (Next.js); native
-    sections of that principle activate only if/when an Android or iOS surface is added.
+Follow-up TODOs (still deferred):
+  - TODO(NATIVE_PLATFORMS): Material Design (Android) and HIG (iOS) sections of Principle III
+    activate only if/when a native surface is added.
+
+Environment note:
+  - The chosen stack (Next.js 16 + Vitest 4) requires **Node ≥ 20.9** at runtime. The
+    repository assumes contributors have Node 20+ on PATH (e.g., via nvm). System Node 18
+    will fail both `next` and `vitest`.
 -->
 
 # AI Mock Project Constitution
@@ -110,6 +109,31 @@ Rules — TypeScript 5:
 - Validate all external boundary data (HTTP requests, env vars, third-party responses) with a
   schema validator before use.
 
+Rules — Prisma + PostgreSQL (persistence):
+
+- The single source of truth for the database schema is `prisma/schema.prisma`. Schema changes
+  MUST flow through `prisma migrate dev` (development) and `prisma migrate deploy` (CI/prod) —
+  hand-edited migrations are forbidden except as a documented escape hatch.
+- A single `PrismaClient` instance MUST be exported from `src/lib/prisma.ts` (using the
+  hot-reload-safe `globalThis` pattern Next.js requires). No file MAY instantiate
+  `new PrismaClient()` outside that module.
+- Services MUST go through repository modules in `src/repositories/`. Route handlers, React
+  Server Components, and Server Actions MUST NOT import `PrismaClient` directly — preserving
+  the layered flow (Principle II — Next.js block) and keeping the ORM swappable per Principle
+  III's separation of concerns.
+- Multi-statement workflows that mutate two or more rows MUST run inside `prisma.$transaction`
+  (or an interactive transaction) so partial failures do not leave the DB inconsistent.
+- Raw SQL (`$queryRaw` / `$executeRaw`) MUST use parameterized template literals — never string
+  concatenation. Use of raw SQL requires a one-line justification comment naming the typed
+  query it replaces (Principle IV — A03).
+- Auth.js (NextAuth) tables — `User`, `Account`, `Session`, `VerificationToken` — are owned by
+  the `@auth/prisma-adapter`. Project-specific user attributes MUST be added either as columns
+  on `User` (when always present) or as a related table (when optional / per-feature). The
+  schema for these tables MUST follow the Auth.js Prisma adapter contract.
+- Seed scripts live in `prisma/seed.ts` and MUST be idempotent.
+- `DATABASE_URL` MUST be read through the typed config module (Technology Stack § Configuration);
+  no direct `process.env.DATABASE_URL` reads outside that module.
+
 Rules — Tailwind CSS v4:
 
 - Tokens live in CSS variables in `app/globals.css`. Components MUST consume them via Tailwind
@@ -179,7 +203,8 @@ Rules:
   server-only. Passwords MUST be hashed with a memory-hard algorithm (Argon2id or bcrypt with
   cost ≥ 12). HTTPS-only cookies (`Secure`, `HttpOnly`, `SameSite=Lax` or stricter).
 - **A03 — Injection**: User input MUST be parameterized at every boundary. SQL queries go through
-  the chosen ORM (`TODO(ORM_CHOICE)`); shell calls go through a library that takes argv arrays
+  Prisma (parameterized via Prisma Client; raw SQL only with parameterized template literals);
+  shell calls go through a library that takes argv arrays
   (no string concatenation); HTML rendering relies on React's default escaping —
   `dangerouslySetInnerHTML` is forbidden without sanitization (DOMPurify or equivalent) and a
   reviewed justification.
@@ -249,11 +274,27 @@ The project is built on a fixed core stack. Changes require a constitution amend
   in `app/globals.css` and consumed via Tailwind utilities.
 - **Linting**: ESLint 9 with `eslint-config-next` (core-web-vitals + typescript). PRs MUST pass
   `npm run lint` and `tsc --noEmit`.
-- **Testing**: Vitest (unit/integration) + Playwright (E2E, see `.momorph/guidelines/e2e/`).
-  See `TODO(TESTING_INSTALL)`.
-- **Persistence**: TODO(ORM_CHOICE) — choose from `.momorph/guidelines/db_guidelines/` (Prisma,
-  Mongoose, MikroORM) before any persistent feature is built. Until then, persistence is
-  isolated behind a repository interface and may use an in-memory fake.
+- **Testing**: **Vitest 4** (unit/integration) with `jsdom`, React Testing Library, and
+  `@testing-library/jest-dom`; configs at `vitest.config.ts` + `vitest.setup.ts`. **Playwright
+  1.59** (E2E) configured at `playwright.config.ts` with the Next.js dev server wired in via
+  `webServer`. Test scripts: `npm run test` / `test:watch` / `test:e2e` / `test:e2e:ui`. The
+  E2E browser is chromium-only by default; expand to firefox/webkit via `playwright.config.ts`
+  when needed. See `.momorph/guidelines/e2e/` for the full E2E methodology. **Linux note**:
+  Playwright requires system libraries (`libnspr4`, `libnss3`, …); run
+  `sudo npx playwright install-deps chromium` once per workstation, or use a CI image with
+  them preinstalled.
+- **Runtime — Node**: contributors MUST run Node ≥ 20.9 (Next.js 16's floor; Vitest 4 requires
+  ≥ 20.19). Use `nvm use` or equivalent — system Node 18 will fail both `next dev` and
+  `vitest run`.
+- **Persistence**: **PostgreSQL 15+ via Prisma ORM**. Schema lives at `prisma/schema.prisma`;
+  the singleton client lives at `src/lib/prisma.ts`. Repository modules in `src/repositories/`
+  are the only allowed callers of `PrismaClient`. The canonical guideline is
+  `.momorph/guidelines/db_guidelines/PrismaORM_guideline.md`.
+- **Authentication & sessions**: **Auth.js (NextAuth) with `@auth/prisma-adapter`**. The
+  adapter owns the `User`, `Account`, `Session`, and `VerificationToken` tables. Application
+  code MUST consume sessions through the Auth.js helpers (`auth()`, `getServerSession`-style
+  APIs), never by reading the session cookie directly. Project-specific user fields are added
+  on `User` (always present) or as related tables (optional / per-feature).
 - **Folder layout** (canonical):
   - `app/` — routes, layouts, route handlers, server components.
   - `app/api/<resource>/route.ts` — thin route handlers (Principle II).
@@ -326,8 +367,9 @@ or implementing features.
 
 **Runtime guidance**: For day-to-day implementation rules, agents MUST consult
 `.momorph/guidelines/frontend.md`, `.momorph/guidelines/backend.md`, the
-`.momorph/guidelines/e2e/` series, and (once ratified) the chosen ORM guideline under
-`.momorph/guidelines/db_guidelines/`. The constitution defines the *what* and *why*; the
+`.momorph/guidelines/e2e/` series, and the Prisma persistence guideline at
+`.momorph/guidelines/db_guidelines/PrismaORM_guideline.md`. The constitution defines the
+*what* and *why*; the
 guidelines define the *how*.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-06 | **Last Amended**: 2026-05-06
+**Version**: 1.1.1 | **Ratified**: 2026-05-06 | **Last Amended**: 2026-05-06

@@ -9,7 +9,8 @@
       "mcp__momorph__list_design_items",
       "mcp__momorph__get_frame_node_tree",
       "mcp__momorph__list_frames",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "mcp__momorph__get_frame_test_cases"
     ]
   },
   "enabledMcpjsonServers": [
