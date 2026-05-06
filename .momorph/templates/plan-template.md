@@ -25,19 +25,34 @@
 
 ## Constitution Compliance Check
 
-*GATE: Must pass before implementation can begin*
+*GATE: Must pass before implementation can begin. Each item maps to a principle in
+`.momorph/constitution.md`.*
 
-- [ ] Follows project coding conventions
-- [ ] Uses approved libraries and patterns
-- [ ] Adheres to folder structure guidelines
-- [ ] Meets security requirements
-- [ ] Follows testing standards
+- [ ] **Principle I — Clean Code & Readable Structure**: file/folder layout, naming, single-
+      responsibility split, no dead code, lint-clean.
+- [ ] **Principle II — Stack Best Practices**: Server Components by default, layered route →
+      service → repository flow, no business logic in route handlers, no `any`, Tailwind tokens
+      (no raw color/spacing literals).
+- [ ] **Principle III — Platform-Appropriate UI Patterns**: responsive (≥ 360 px), WCAG 2.1 AA
+      (contrast, keyboard, focus, labels, landmarks), evidence-based navigation sourced from
+      `SCREENFLOW.md` / `group_specs/*_group.md`, `prefers-reduced-motion` respected.
+- [ ] **Principle IV — OWASP Secure Coding**: threat model captured below; access control,
+      injection, secrets, headers, logging, and input validation considered for every new
+      surface.
+- [ ] **Principle V — Test-Driven Development**: failing tests written before implementation
+      for every `FR-*`; abuse-case tests planned for high-risk flows; coverage targets stated.
+
+**Threat model summary** *(Principle IV)*:
+
+- Trust boundaries: [e.g., browser ↔ Next.js server, server ↔ DB, server ↔ third-party]
+- Sensitive data handled: [e.g., credentials, PII, payment tokens, session tokens]
+- Abuse cases to test: [e.g., IDOR, brute-force login, CSRF on state-changing routes]
 
 **Violations (if any)**:
 
-| Violation | Justification | Alternative Rejected |
-|-----------|---------------|---------------------|
-| [e.g., New library] | [Why needed] | [Why existing won't work] |
+| Principle | Violation | Justification | Alternative Rejected |
+|-----------|-----------|---------------|---------------------|
+| [e.g., II] | [e.g., New library] | [Why needed] | [Why existing won't work] |
 
 ---
 
