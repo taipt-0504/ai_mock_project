@@ -1,0 +1,318 @@
+# Tasks: Login
+
+**Frame**: `GzbNeVGJHz-Login`
+**Prerequisites**: plan.md (required), spec.md (required), research.md (recommended). `design-style.md` is intentionally deferred per the spec's Out-of-Scope and plan's Phase 2 step 5 — visual tokens and assets are fetched on demand via `query_section` and `get_media_files` (task **T037**).
+
+---
+
+## Task Format
+
+```
+- [ ] T### [P?] [Story?] Description with file path
+```
+
+- **[P]**: Can run in parallel (different files, no dependencies on incomplete tasks)
+- **[Story]**: Which user story this belongs to (`[US1]` Sign in with Google, `[US2]` Authenticated redirect, `[US3]` Switch language, `[US4]` Read intro). Setup / Foundational / Polish phases have no story label.
+
+---
+
+## Phase 1: Setup (Shared Infrastructure)
+
+**Purpose**: project-level dependencies, scripts, and prerequisites that aren't user-story-specific.
+
+- [ ] T001 [P] Add runtime dependencies to package.json: `next-auth@^5`, `@auth/prisma-adapter`, `@prisma/client`, `zod` (run `npm install`)
+- [ ] T002 [P] Add dev dependencies to package.json: `prisma`, `tsx` (run `npm install -D`)
+- [ ] T003 Add npm scripts to package.json: `db:migrate` (`prisma migrate dev`), `db:generate` (`prisma generate`), `db:seed` (`tsx prisma/seed.ts`), `db:reset` (`prisma migrate reset --force`), `db:test:reset` (`DATABASE_URL=$DATABASE_URL_TEST prisma migrate reset --force`)
+- [ ] T004 [P] Author docker-compose.yml with a `postgres:15-alpine` service, default port 5432, named volume `pgdata`, env defaults for `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` in docker-compose.yml
+- [ ] T005 [P] Author .env.example with `DATABASE_URL`, `DATABASE_URL_TEST`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_TRUST_HOST`, `NODE_ENV` placeholders + comment showing `openssl rand -base64 32` for `AUTH_SECRET` in .env.example
+- [ ] T006 Verify Phase 0 prerequisites are met (Google Cloud OAuth client provisioned with `http://localhost:3000/api/auth/callback/google` redirect URI; local PostgreSQL ≥ 15 reachable; `sudo npx playwright install-deps chromium` already executed) — confirm in PR description
+- [ ] T007 Confirm stakeholder approval that Login may ship before Homepage SAA (research.md open question) — record decision in PR description
+
+---
+
+## Phase 2: Foundational (Blocking Prerequisites)
+
+**Purpose**: every cross-cutting module every user story depends on. **Order-sensitive** within this phase: `config.ts` MUST land before `prisma.ts` and `auth.config.ts` because both consume it (Constitution § Configuration — no `process.env` outside `config.ts`).
+
+**⚠️ CRITICAL**: No user story work (Phase 3+) may begin until this phase is complete.
+
+### Test infrastructure (TDD enabler)
+
+- [ ] T008 [P] Author Vitest globalSetup runner that runs `db:test:reset` before any test suite in tests/global-setup.ts
+- [ ] T009 [P] Wire `globalSetup: './tests/global-setup.ts'` into vitest.config.ts
+- [ ] T010 [P] Author seed-helper functions `createTestUser`, `createTestSession`, `createTestAccount` (with deterministic IDs) in tests/fixtures/users.ts
+
+### Database schema (Auth.js adapter contract)
+
+- [ ] T011 Author Prisma schema with `User` (Auth.js columns + `locale String @default("vi-VN")`), `Account`, `Session`, `VerificationToken` per the Auth.js Prisma adapter contract; PostgreSQL datasource using `env("DATABASE_URL")` in prisma/schema.prisma
+- [ ] T012 Run `npm run db:migrate -- --name init_auth` and commit the generated migration files under prisma/migrations/
+- [ ] T013 [P] Author idempotent placeholder seed (no-op for now; just exports a default async function) in prisma/seed.ts
+
+### Typed env config (must precede every module that reads runtime config)
+
+- [ ] T014 [P] Write failing tests for the zod schema (rejects missing `AUTH_SECRET`, accepts valid, distinguishes `DATABASE_URL` vs `DATABASE_URL_TEST`) in tests/unit/lib/config.test.ts
+- [ ] T015 Author the zod-validated config module exporting a typed `config` object (reads `NODE_ENV`, `DATABASE_URL`, `DATABASE_URL_TEST`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_TRUST_HOST`); the ONLY module that touches `process.env` directly in src/lib/config.ts
+
+### Prisma singleton
+
+- [ ] T016 [P] Write failing test asserting `PrismaClient` is reused across imports (singleton) in tests/unit/lib/prisma.test.ts
+- [ ] T017 Author `PrismaClient` singleton using the `globalThis` HMR-safe pattern; reads `config.NODE_ENV` (NOT `process.env.NODE_ENV`) in src/lib/prisma.ts
+
+### Logger (request-id aware, redacts secrets)
+
+- [ ] T018 [P] Write failing tests for redaction: blocks `access_token`, `refresh_token`, `id_token`, `code`, `state`, `password` property keys; redacts JWT-shape strings and `^ya29\.` Google access tokens; emits `request_id="(unset)"` when ALS context is absent in tests/unit/lib/logger.test.ts
+- [ ] T019 Author `info`/`warn`/`error` wrappers with `AsyncLocalStorage`-backed `request_id` accessor and the redaction blocklist in src/lib/logger.ts
+
+### Locale types + display map
+
+- [ ] T020 [P] Write failing tests for `isSupportedLocale` type guard and `LOCALE_DISPLAY` exhaustiveness across `SupportedLocale` in tests/unit/lib/i18n/types.test.ts
+- [ ] T021 [P] Author `SupportedLocale = 'vi-VN' | 'en-US'`, `SUPPORTED_LOCALES`, `isSupportedLocale`, and `LOCALE_DISPLAY: Record<SupportedLocale, { chip; flagAsset }>` in src/lib/i18n/types.ts
+- [ ] T022 [P] Re-export `SupportedLocale` and `SUPPORTED_LOCALES` for cross-feature consumers in src/types/locale.ts
+
+### Translation catalogs
+
+- [ ] T023 [P] Author Vietnamese catalog seeded from spec strings: `program.title` ("ROOT FURTHER"), `program.description1`, `program.description2`, `loginButton.label`, `loginButton.errorGeneric`, `loginButton.errorCookies`, `loginButton.errorCancelled` in src/lib/i18n/catalogs/vi-VN.json
+- [ ] T024 [P] Author English catalog with translations of the same keys in src/lib/i18n/catalogs/en-US.json
+
+### i18n module + parity test
+
+- [ ] T025 [P] Write failing tests for `t(key, locale)` (returns localized string; falls back to `vi-VN` and logs a warning when key is missing in target locale) in tests/unit/lib/i18n/index.test.ts
+- [ ] T026 [P] Write failing test asserting `vi-VN.json` and `en-US.json` have identical key sets (catalog parity) in tests/unit/lib/i18n/parity.test.ts
+- [ ] T027 Author `t(key: string, locale: SupportedLocale): string` with fallback to `vi-VN` + logger warning in src/lib/i18n/index.ts
+
+### Locale cookie helpers
+
+- [ ] T028 [P] Write failing tests for `getSaaLocale` (allowlist hit / miss / tamper), `setSaaLocale` (verifies attributes `Path=/`, `SameSite=Lax`, `Max-Age=31536000`, `Secure` in production), and `clearSaaLocale` IS invoked when an invalid cookie is read (Edge Case — Tampered cookie) in tests/unit/lib/cookies/saa-locale.test.ts
+- [ ] T029 Author `getSaaLocale()` (uses `cookies()` from `next/headers`; validates against `SUPPORTED_LOCALES`; clears via `clearSaaLocale` on tamper; returns `vi-VN` default), `setSaaLocale(locale, response)`, `clearSaaLocale(response)` in src/lib/cookies/saa-locale.ts
+
+### Auth.js config (factory + instantiation split)
+
+- [ ] T030 [P] Write failing tests for `buildAuthConfig` (signature accepts `{ providers }`; returns config with `adapter`, `session.strategy === 'database'`, `session.maxAge === 60*60*24*30`, `secret`, `trustHost`, and the enumerated callbacks `events.signIn`/`signOut`/`linkAccount`/`createUser` and `callbacks.signIn`/`session`) in tests/unit/lib/auth.config.test.ts
+- [ ] T031 Author `buildAuthConfig({ providers })` factory: `PrismaAdapter(prisma)`, `session: { strategy: 'database', maxAge: 60*60*24*30 }`, `secret: config.AUTH_SECRET`, `trustHost: config.AUTH_TRUST_HOST`, `events.signIn` → `logger.info('auth.signin', { userId, isNewUser })`, `events.signOut` → `logger.info('auth.signout', ...)`, `events.linkAccount` → `logger.info('auth.linkAccount', ...)`, `events.createUser` → `logger.info('auth.createUser', ...)`, `callbacks.signIn` → returns `true` for valid Google profile, `callbacks.session` → enriches session with `User.locale` to avoid downstream N+1 in src/lib/auth.config.ts
+- [ ] T032 Instantiate `NextAuth(buildAuthConfig({ providers: [Google({ clientId: config.AUTH_GOOGLE_ID, clientSecret: config.AUTH_GOOGLE_SECRET })] }))` and re-export `auth`, `signIn`, `signOut`, `handlers` in src/lib/auth.ts
+
+**Checkpoint**: Phase 2 complete when `npm run test` is green, `npm run db:migrate` produces a working DB, and no source file outside `src/lib/config.ts` reads `process.env` (verifiable via `grep`). User-story phases unblocked.
+
+---
+
+## Phase 3: User Story 1 — Sign in with Google (Priority: P1) 🎯 MVP
+
+**Goal**: an unauthenticated visitor clicks **LOGIN With Google**, completes a full-page Google OAuth flow, and lands on `/` with a database-backed session cookie + `Session` row.
+
+**Independent Test**: E2E happy path from a clean browser — click → Playwright `page.route()` short-circuits the Google authorization endpoint with a deterministic code → callback creates a `Session` row → asserts URL is `/`, `Session` cookie is present, and a matching `Session` row exists in the test DB. (Page content at `/` is the create-next-app boilerplate during Phase 3; replaced in Phase 4.)
+
+### Compatibility smoke test (Risk #1 mitigation — must run first)
+
+- [ ] T033 [US1] Run `npm run build` after T032 to confirm Auth.js v5 + Next.js 16 compile cleanly with the planned config; record any warnings (especially Edge-Runtime warnings) in PR description; if Edge warnings appear, T036 mitigates
+
+### Auth.js handler (route file + abuse-case + happy-path tests)
+
+- [ ] T034 [P] [US1] Write failing integration test asserting tampered/missing OAuth `state` returns a non-success redirect/response (invokes the catch-all directly with a malformed callback URL — no Google network mock needed) in tests/integration/login/auth-callback.test.ts
+- [ ] T035 [P] [US1] Write failing integration test that uses `buildAuthConfig({ providers: [Credentials(...)] })` to exercise the full sign-in flow without Google, asserting `Session` row + cookie creation in tests/integration/login/auth-happy-path.test.ts
+- [ ] T036 [US1] Author the Auth.js catch-all route file: `export const { GET, POST } = handlers; export const runtime = 'nodejs'` in app/api/auth/[...nextauth]/route.ts
+
+### Asset + style fetch (in lieu of design-style.md)
+
+- [ ] T037 [US1] Run `query_section` against the Login frame for: B.3 button (idle/hover/disabled/loading), A.2 chip, hero typography, footer; run `get_media_files` for: SAA logo, Vietnam flag SVG, USA flag SVG, Google G icon, hero key visual, decorative artwork. Save assets under `public/assets/{header,login,footer}/{icons,images,logos}/` with kebab-case names (Constitution § Asset and naming conventions)
+- [ ] T038 [US1] Update Tailwind tokens with values pulled in T037 (`--color-primary`, `--color-on-primary`, `--color-text`, hero typography vars, layout spacing) in app/globals.css
+
+### Server Components (page + composition + decorative shells)
+
+- [ ] T039 [P] [US1] Write failing test asserting `Footer` is rendered with `position: fixed` (or sticky-bottom equivalent) and is non-interactive (FR-013) in tests/unit/components/footer/Footer.test.tsx
+- [ ] T040 [P] [US1] Author the Footer Server Component (non-interactive, fixed at viewport bottom — FR-012 / FR-013) in src/components/footer/Footer.tsx
+- [ ] T041 [P] [US1] Author the Logo Server Component using `next/image` (Constitution Principle II); decorative if no semantic value, otherwise `alt="Sun Annual Awards 2025"` per `query_section` outcome in src/components/header/Logo.tsx
+- [ ] T042 [P] [US1] Write failing test asserting `HeroSection` renders the title + 2 description lines from the active locale catalog and exposes `B.1` / `C` decorative artwork as `aria-hidden` in tests/unit/components/login/HeroSection.test.tsx
+- [ ] T043 [US1] Author the HeroSection Server Component: takes `locale` prop, calls `t(...)` for `program.title`, `program.description1`, `program.description2`; renders B.1 key visual and C decorative group as decorative (`aria-hidden` divs with `background-image`, or `next/image` with empty `alt=""`); slots `<LoginButton />` below the copy in src/components/login/HeroSection.tsx
+- [ ] T044 [P] [US1] Author the chip-only static placeholder LanguageSelector (Server Component for now — shows chip + flag from `LOCALE_DISPLAY[currentLocale]`; click is a no-op until Phase 5) in src/components/header/LanguageSelector.tsx
+- [ ] T045 [P] [US1] Author the Header Server Component composing `Logo` + `LanguageSelector` (anchors A.1 left, A.2 right) in src/components/header/Header.tsx
+- [ ] T046 [US1] Author the LoginPage Server Component composing `Header` + `HeroSection` + `Footer`; takes `locale` prop in src/components/login/LoginPage.tsx
+
+### LoginButton (the only interactive component in Phase 3)
+
+- [ ] T047 [P] [US1] Write failing tests for LoginButton: idle / pending (`aria-busy=true`, `aria-disabled=true`) / each error state (`errorGeneric`, `errorCookies`, `errorCancelled`); ignores click while `oauthInProgress`; resets state on `pagehide`; restores focus to button on cancel; surfaces `errorGeneric` when `navigator.onLine === false` (Edge Case: no network) in tests/unit/components/login/LoginButton.test.tsx
+- [ ] T048 [US1] Author the LoginButton Client Component (`'use client'`): reads `callbackUrl` from `useSearchParams()` (defaults to `/`), calls `signIn('google', { callbackUrl })` inside `useTransition`, manages `oauthInProgress` + `oauthError`, sets ARIA attributes, listens to `pagehide`, ignores duplicate clicks in src/components/login/LoginButton.tsx
+
+### Login route
+
+- [ ] T049 [US1] Author the Login layout (wraps `{children}` in a flex column to position Footer at the bottom) in app/login/layout.tsx
+- [ ] T050 [US1] Author the Login page Server Component: calls `auth()`; if a session exists, calls `redirect('/')` BEFORE returning markup (FR-002 + TR-001); else reads `getSaaLocale()` and renders `<LoginPage locale={...} />`. Add `export const dynamic = 'force-dynamic'` to opt out of static caching (spec State Management § Cache & invalidation) in app/login/page.tsx
+
+### E2E (US1 happy + cancellation paths)
+
+- [ ] T051 [P] [US1] Write E2E happy-path spec: clean session → click button → mock Google authorize endpoint with deterministic code → callback creates `Session` row → URL is `/`, cookie present, DB row present in tests/e2e/login/sign-in.spec.ts
+- [ ] T052 [P] [US1] Write E2E cancellation spec: (a) Google returns `error=access_denied` → land on /login with `errorCancelled` copy; (b) browser-back from Google → land on /login with `oauthInProgress` cleared in tests/e2e/login/sign-in-cancellation.spec.ts
+
+**Checkpoint**: US1 acceptance scenarios 1–4 pass; abuse-case `state`-tampering test passes; the sign-in flow is functional behind `/login`.
+
+---
+
+## Phase 4: User Story 2 — Authenticated visitor redirect (Priority: P1)
+
+**Goal**: an already-authenticated user hitting `/login` is redirected to `/` server-side **before** any Login markup is sent.
+
+**Independent Test**: E2E — pre-seed a `Session` row + cookie via `tests/fixtures/users.ts` → navigate to `/login` → assert response is a redirect to `/` and the response body never contains Login HTML markers (e.g., the "ROOT FURTHER" hero text).
+
+- [ ] T053 [P] [US2] Write failing integration test that mocks `auth()` to return a valid session and asserts the page calls `redirect('/')` before any markup is produced in tests/integration/login/auth-redirect.test.ts
+- [ ] T054 [US2] Verify (and adjust if needed) the session-not-found error path in `app/login/page.tsx`: when `auth()` throws (DB outage / stale session), render Login as unauthenticated and log via `logger.warn('auth.lookup-failed', { ... })` per Edge Case + spec State Management § Loading & error states in app/login/page.tsx
+- [ ] T055 [US2] Replace the create-next-app boilerplate at `/` with an auth-gated stub: `auth()` → if session, render a placeholder `<main>` for Homepage SAA (`<h1>Authenticated — Homepage SAA placeholder</h1>`); else `redirect('/login')` in app/page.tsx
+- [ ] T056 [P] [US2] Write E2E spec: pre-seed a session → visit `/login` → assert redirect status + `/` final URL + no Login markup in body in tests/e2e/login/authenticated-redirect.spec.ts
+
+**Checkpoint**: US2 acceptance scenarios pass; SC-002 (zero Login flicker for authed users) verified.
+
+---
+
+## Phase 5: User Story 3 — Switch UI language (Priority: P2)
+
+**Goal**: clicking A.2 opens a dropdown; selecting a locale persists it (cookie for unauthenticated, `User.locale` + cookie mirror for authenticated) and re-renders visible copy without a full reload.
+
+**Independent Test**: E2E — set `saa_locale` cookie to `vi-VN`, load `/login`, confirm Vietnamese title; open A.2 dropdown, select `US` (en-US), confirm English title appears without page navigation; assert the cookie is now `en-US`.
+
+### Repository (Prisma boundary)
+
+- [ ] T057 [P] [US3] Write failing integration test for `userRepository.updateLocale`: updates `User.locale`; rejects unknown user IDs (real test DB via globalSetup + fixtures) in tests/unit/repositories/user-repository.test.ts
+- [ ] T058 [US3] Author the user repository with `updateLocale(userId: string, locale: SupportedLocale)` (Prisma client is the only DB caller; no business logic) in src/repositories/user-repository.ts
+
+### Service (orchestration)
+
+- [ ] T059 [P] [US3] Write failing tests for `localeService.setLocale(userId, locale)`: with userId, calls `userRepository.updateLocale`; without userId (unauth path), is a no-op + returns success in tests/unit/services/locale-service.test.ts
+- [ ] T060 [US3] Author the locale service with `setLocale(userId: string | null, locale: SupportedLocale)` that calls the repository for authenticated users and returns success without DB write for unauthenticated callers (caller still writes the cookie) in src/services/locale-service.ts
+
+### API route handler
+
+- [ ] T061 [P] [US3] Write failing integration test for `POST /api/i18n/locale`: unauth user → 401; auth user with valid `locale` body → 204 + `Set-Cookie: saa_locale=…` + `User.locale` updated; auth user with invalid `locale` (zod-rejected) → 400 in tests/integration/login/i18n-locale-route.test.ts
+- [ ] T062 [US3] Author the locale route handler (thin: parse body via zod schema with `isSupportedLocale`, call `auth()` to get session, delegate to `localeService.setLocale`, set the `saa_locale` cookie via `setSaaLocale`, return 204) in app/api/i18n/locale/route.ts
+
+### LanguageSelector (full disclosure pattern)
+
+- [ ] T063 [P] [US3] Write failing tests for LanguageSelector: chip displays current `LOCALE_DISPLAY` entry; click toggles `aria-expanded`; arrow-up/arrow-down navigate items; `Enter` selects; `Escape` closes; click-outside closes; focus is trapped while open; selection fires the optimistic update + cookie write + (when authed) POST to `/api/i18n/locale` in tests/unit/components/header/LanguageSelector.test.tsx
+- [ ] T064 [US3] Replace the chip-only placeholder LanguageSelector with the full Client Component: `'use client'`, disclosure pattern (`aria-expanded`, `aria-controls`, `role="menu"` + `role="menuitem"`), keyboard navigation, focus trap, optimistic locale switch, background POST to `/api/i18n/locale` for authenticated users with revert + non-blocking toast on failure in src/components/header/LanguageSelector.tsx
+
+### Server-side locale plumbing
+
+- [ ] T065 [US3] Pass the active locale (from `getSaaLocale()`) from `app/login/page.tsx` down through `LoginPage` → `Header` and `HeroSection` so all localized strings reach the right catalog at SSR time in app/login/page.tsx
+
+### E2E
+
+- [ ] T066 [P] [US3] Write E2E spec: starts on `/login` in `vi-VN` → opens dropdown → selects `US` → asserts hero title flips to English without navigation; verifies `saa_locale` cookie is now `en-US`; for an authed variant, also asserts `User.locale` is updated in the DB in tests/e2e/login/language-switch.spec.ts
+
+**Checkpoint**: US3 acceptance scenarios pass; SC-004 verifiable (≤200 ms switch on the optimistic path).
+
+---
+
+## Phase 6: User Story 4 — Read program introduction (Priority: P3)
+
+**Goal**: hero copy renders for the active locale and is non-interactive.
+
+**Independent Test**: E2E — render `/login` for `vi-VN` and `en-US` → assert title + 2 description lines render correctly in each locale and clicking/hovering yields no state change.
+
+- [ ] T067 [P] [US4] Write E2E spec asserting hero copy in both locales and confirming clicks/hovers on the title or description are no-ops (the elements are not buttons, no role, no cursor-pointer affordance) in tests/e2e/login/hero-content.spec.ts
+- [ ] T068 [US4] Verify decorative-element semantics across `Logo` (A.1), Key Visual (B.1), and decorative group (C): each is exposed as decorative to assistive tech (empty `alt=""` or `aria-hidden="true"`) — extends T040 / T041 / T043; add the assertion to tests/unit/components/login/HeroSection.test.tsx (plus `Logo` test if needed)
+
+**Checkpoint**: All four user stories complete and independently testable.
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns
+
+**Purpose**: items that span all stories; run after the user-story phases close.
+
+### Error boundary
+
+- [ ] T069 [P] Author a Login-route error boundary that renders a static "Something went wrong" page in the active locale and logs the cause via `logger.error('login.error-boundary', { ... })` in app/login/error.tsx
+
+### Middleware (request_id, security headers, rate limit)
+
+- [ ] T070 [P] Write failing integration test asserting security headers (`Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`) are present on responses for `/login` and `/api/*` paths in tests/integration/login/middleware-headers.test.ts
+- [ ] T071 [P] Write failing integration test for the rate limiter: the (N+1)th request to `/api/auth/callback/google` from the same simulated IP within the window returns 429 in tests/integration/login/middleware-rate-limit.test.ts
+- [ ] T072 Author the Edge-compatible middleware: generate a UUID `request_id` per request and store it in `AsyncLocalStorage` for the logger; set the security headers; apply token-bucket rate limit (in-memory map for dev/test) on `/api/auth/callback/*` in middleware.ts
+
+### Observability (SC-001 measurement)
+
+- [ ] T073 [P] Instrument the `events.signIn` callback in `src/lib/auth.config.ts` to emit a `duration_ms` metric (B.3 click → session creation) via `logger.info('auth.signin.duration', { request_id, provider, duration_ms })`; add an E2E synthetic threshold check in src/lib/auth.config.ts
+
+### Quality gates
+
+- [ ] T074 [P] Run Lighthouse on `/login` (with Playwright `playwright-lighthouse` or manual chrome-headless audit), capture the report under `docs/lighthouse-login.json`, fix any flagged issues to reach a11y ≥95 (SC-005)
+- [ ] T075 [P] Add an ESLint rule (or grep CI step) that bans `console.*` outside `src/lib/logger.ts`; fix offenders in eslint.config.mjs
+- [ ] T076 [P] Add `.github/workflows/ci.yml` with three jobs: (1) lint+type (`npm run lint`, `tsc --noEmit`), (2) unit (`npm run test`), (3) integration+E2E using `mcr.microsoft.com/playwright:v1.59.x` and a `services.postgres:15-alpine` container; the integration+E2E job sets `DATABASE_URL_TEST` and runs `npm run db:test:reset` before tests in .github/workflows/ci.yml
+
+### Documentation
+
+- [ ] T077 [P] Author the Auth.js + Google Cloud setup walkthrough including `openssl rand -base64 32` for `AUTH_SECRET` and the Google Cloud Console redirect-URI steps in docs/auth-setup.md
+- [ ] T078 [P] Author the local-dev guide covering `docker compose up db`, `cp .env.example .env.local`, `npm run db:migrate`, `npm run dev`, `npm run test`, `npm run test:e2e` in docs/local-dev.md
+- [ ] T079 [P] Update README.md to link to `.momorph/specs/GzbNeVGJHz-login/spec.md`, the constitution, and the two new docs in README.md
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Phase 1 (Setup)**: no dependencies — start immediately. Tasks T001–T007 unlock everything else.
+- **Phase 2 (Foundational)**: depends on Phase 1. Within Phase 2 the order is:
+  1. Test infrastructure (T008–T010) — can run in parallel with everything else.
+  2. Schema + migrate (T011–T013).
+  3. Config (T014–T015) — **must precede** every TS module that touches runtime config.
+  4. Prisma singleton (T016–T017) — depends on config.
+  5. Logger (T018–T019) — depends on AsyncLocalStorage stub from middleware (Phase 7), but ships with `'(unset)'` fallback so no Phase 7 dependency.
+  6. Locale types (T020–T022).
+  7. Catalogs (T023–T024) — depend on locale types for typing.
+  8. i18n module (T025–T027) — depends on catalogs + types.
+  9. Cookie helpers (T028–T029) — depend on locale types.
+  10. Auth config (T030–T031) → Auth instantiation (T032) — depend on prisma + logger + config.
+- **Phase 3 (US1)**: depends on Phase 2 complete. T033 smoke build runs first; T037 (style/asset fetch) gates UI authoring (T038–T046). T034/T035 tests run in parallel with T036 (handler).
+- **Phase 4 (US2)**: depends on Phase 3 (LoginPage + auth handler exist). T053 test runs in parallel with T054/T055.
+- **Phase 5 (US3)**: depends on Phase 2 (foundation + i18n) — does NOT need US1 / US2 to be functional, but the LanguageSelector replaces the placeholder from T044. Internally: repo → service → route handler → component → E2E.
+- **Phase 6 (US4)**: depends on Phase 3 (HeroSection exists). Trivially small.
+- **Phase 7 (Polish)**: depends on Phases 3–6 being feature-complete (or at least the parts being polished).
+
+### Within Each User Story
+
+- Tests MUST be written and FAIL before implementation (Constitution Principle V).
+- Within Phase 5: repository → service → route handler → component (each layer tests + impl together).
+- Within Phase 3: handler smoke (T033) → handler tests + impl (T034–T036) → assets (T037–T038) → server components in any order (T039–T046, mostly [P]) → LoginButton (T047–T048) → route wiring (T049–T050) → E2E (T051–T052).
+
+### Parallel Opportunities
+
+- **Phase 1**: T001 ∥ T002 ∥ T004 ∥ T005 (different files / package.json scripts merged manually after).
+- **Phase 2**:
+  - T008 ∥ T009 ∥ T010 (test infrastructure independent of source modules).
+  - T013 ∥ T014 ∥ T016 ∥ T018 ∥ T020 ∥ T023 ∥ T024 ∥ T025 ∥ T026 ∥ T028 ∥ T030 (failing-test authoring is parallelizable across files; impls follow sequentially per dependency chain).
+- **Phase 3**:
+  - T039 ∥ T040 ∥ T041 ∥ T042 ∥ T044 ∥ T045 ∥ T047 (component shells + their tests).
+  - T051 ∥ T052 (independent E2E specs).
+- **Phase 5**: T057 ∥ T059 ∥ T061 ∥ T063 (failing tests across all four layers).
+- **Phase 7**: T069 ∥ T070 ∥ T071 ∥ T074 ∥ T075 ∥ T076 ∥ T077 ∥ T078 ∥ T079 (independent files / external commands).
+
+---
+
+## Implementation Strategy
+
+### MVP First (Recommended)
+
+1. Complete Phase 1 + Phase 2 (foundation) — no user-facing change yet.
+2. Complete Phase 3 (US1 — sign in with Google) → working sign-in to a placeholder home page.
+3. **STOP & VALIDATE**: run `npm run test` + `npm run test:e2e`; verify with the stakeholder that a real Google account can sign in.
+4. **Deploy if ready** — at this point the app has a working authenticated entry, even if `/` is a placeholder.
+
+### Incremental Delivery (Recommended after MVP)
+
+5. Add Phase 4 (US2 — authenticated redirect) → cleaner UX for re-visits → Test → Deploy.
+6. Add Phase 5 (US3 — language switch) → multi-locale Login → Test → Deploy.
+7. Add Phase 6 (US4 — hero verification) → Test → Deploy.
+8. Add Phase 7 (Polish — error boundary, security headers, rate limit, observability, CI, docs) → Test → Deploy.
+
+### Suggested MVP Scope
+
+**MVP = Phase 1 + Phase 2 + Phase 3 (US1)**. The other three user stories enhance UX / security / observability but are not blockers for the core sign-in capability.
+
+---
+
+## Notes
+
+- **TDD discipline (Constitution Principle V)**: every `T###` that authors production code is preceded by a `T### [P]` that writes the failing test. The pairings are explicit in each phase. No production task may be marked complete unless its test pair was authored first AND fails until the production code lands.
+- **No `process.env` outside `src/lib/config.ts`**: enforce via grep in CI (T075 covers `console.*`; add a similar grep for `process.env`).
+- **Path alias**: imports use `@/src/...` and `@/app/...` per the plan's path-alias decision (Constitution § Imports).
+- **Asset on-demand**: T037 is the **only** task that runs MoMorph design tools. If `query_section` or `get_media_files` are unavailable (e.g., MCP not configured), the implementer pauses Phase 3 UI tasks until they are reachable.
+- **Commit cadence**: commit after each task (or each test+impl pair). PRs should map to a phase or a sub-phase, not the whole feature, to keep review surface small.
+- **Total tasks**: 79 — counts per phase: Setup 7, Foundational 25, US1 20, US2 4, US3 10, US4 2, Polish 11.
