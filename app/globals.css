@@ -23,6 +23,16 @@
   /* Language dropdown surface (sourced from Figma frame hUyaaugye2). */
   --color-saa-dropdown-surface: #00070c;
   --color-saa-dropdown-border: #998c5f;
+
+  /* SAA 2025 — Homepage SAA tokens (sourced from Figma frame i87tDx10uM). */
+  --color-saa-card-surface: #001320;
+  --color-saa-card-border: #2e3940;
+  --color-saa-essay-quote-fg: #ffea9e;
+  --color-saa-fab-bg: #ffea9e;
+  --color-saa-fab-fg: #00101a;
+  --color-saa-footer-bg: #00070c;
+  --color-saa-footer-fg: #ffffff;
+  --color-saa-notification-dot: #d4271d;
 }
 
 @theme inline {
@@ -44,6 +54,14 @@
   --color-saa-divider: var(--color-saa-divider);
   --color-saa-dropdown-surface: var(--color-saa-dropdown-surface);
   --color-saa-dropdown-border: var(--color-saa-dropdown-border);
+  --color-saa-card-surface: var(--color-saa-card-surface);
+  --color-saa-card-border: var(--color-saa-card-border);
+  --color-saa-essay-quote-fg: var(--color-saa-essay-quote-fg);
+  --color-saa-fab-bg: var(--color-saa-fab-bg);
+  --color-saa-fab-fg: var(--color-saa-fab-fg);
+  --color-saa-footer-bg: var(--color-saa-footer-bg);
+  --color-saa-footer-fg: var(--color-saa-footer-fg);
+  --color-saa-notification-dot: var(--color-saa-notification-dot);
 }
 
 body {

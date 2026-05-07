@@ -6,5 +6,65 @@
   "loginButton.errorGeneric": "Không thể đăng nhập. Vui lòng thử lại.",
   "loginButton.errorCookies": "Trình duyệt đang chặn cookie. Vui lòng cho phép cookie và thử lại.",
   "loginButton.errorCancelled": "Bạn đã hủy đăng nhập với Google.",
-  "footer.copyright": "Bản quyền thuộc về Sun* © 2025"
+  "footer.copyright": "Bản quyền thuộc về Sun* © 2025",
+
+  "home.hero.subtitle": "Coming soon",
+  "home.hero.countdown.days": "NGÀY",
+  "home.hero.countdown.hours": "GIỜ",
+  "home.hero.countdown.minutes": "PHÚT",
+
+  "home.nav.about": "About SAA 2025",
+  "home.nav.awards": "Award Information",
+  "home.nav.kudos": "Sun* Kudos",
+
+  "home.event.time.label": "Thời gian:",
+  "home.event.time.value": "26/12/2025",
+  "home.event.location.label": "Địa điểm:",
+  "home.event.location.value": "Âu Cơ Art Center",
+  "home.event.facebook": "Tường thuật trực tiếp qua sóng Livestream",
+
+  "home.cta.about_awards": "ABOUT AWARDS",
+  "home.cta.about_kudos": "ABOUT KUDOS",
+
+  "home.essay.paragraph1": "Sun Annual Awards 2025 trở lại với chủ đề ROOT FURTHER — tôn vinh những con người dám bám rễ sâu vào giá trị cốt lõi và vươn xa hơn mỗi ngày.",
+  "home.essay.paragraph2": "Chúng tôi tin rằng mỗi cá nhân, mỗi đội ngũ tại Sun* đều mang trong mình một câu chuyện đáng được kể — về nỗ lực, về sáng tạo, về sự bền bỉ.",
+  "home.essay.paragraph3": "ROOT FURTHER là dịp để cộng đồng Sun* nhìn lại một năm cùng nhau, tri ân những đóng góp âm thầm và truyền cảm hứng cho hành trình phía trước.",
+  "home.essay.quote": "Bám rễ thật sâu — Vươn xa thật rộng.",
+
+  "home.awards.section.caption": "Hệ thống giải thưởng",
+  "home.awards.section.heading": "Các hạng mục vinh danh",
+  "home.awards.section.lead": "Sáu hạng mục — sáu hành trình tỏa sáng. Tìm hiểu chi tiết từng giải thưởng và các tiêu chí đề cử.",
+  "home.awards.section.detail_button": "Chi tiết",
+
+  "home.awards.top_talent.title": "Top Talent",
+  "home.awards.top_talent.description": "Vinh danh những cá nhân xuất sắc nhất, có đóng góp nổi bật và truyền cảm hứng cho cộng đồng Sun*.",
+  "home.awards.top_project.title": "Top Project",
+  "home.awards.top_project.description": "Tôn vinh những dự án tiêu biểu, mang lại giá trị lớn cho khách hàng và cho công ty trong năm 2025.",
+  "home.awards.top_project_leader.title": "Top Project Leader",
+  "home.awards.top_project_leader.description": "Dành cho các Project Leader dẫn dắt đội ngũ vượt qua thử thách và đạt được kết quả ấn tượng.",
+  "home.awards.best_manager.title": "Best Manager",
+  "home.awards.best_manager.description": "Ghi nhận những nhà quản lý truyền cảm hứng, nuôi dưỡng văn hóa Sun* và phát triển con người.",
+  "home.awards.signature_2025_creator.title": "Signature 2025 - Creator",
+  "home.awards.signature_2025_creator.description": "Tôn vinh dấu ấn sáng tạo nổi bật của năm — một sản phẩm, một sáng kiến mang đậm chất Sun*.",
+  "home.awards.mvp.title": "MVP (Most Valuable Person)",
+  "home.awards.mvp.description": "Most Valuable Player — người tạo ra giá trị to lớn và bền vững cho tổ chức trong suốt một năm.",
+
+  "home.kudos.label": "Phong trào ghi nhận",
+  "home.kudos.title": "Sun* Kudos",
+  "home.kudos.description": "ĐIỂM MỚI CỦA SAA 2025\nHoạt động ghi nhận và cảm ơn đồng nghiệp — lần đầu tiên diễn ra dành cho tất cả Sunner. Hoạt động sẽ được triển khai vào tháng 11/2025, khuyến khích người Sun* chia sẻ những lời ghi nhận, cảm ơn đồng nghiệp trên hệ thống do BTC công bố. Đây sẽ là chất liệu để Hội đồng Heads tham khảo trong quá trình lựa chọn người đạt giải.",
+  "home.kudos.detail_button": "Chi tiết",
+
+  "home.footer.about": "About SAA 2025",
+  "home.footer.awards": "Award Information",
+  "home.footer.kudos": "Sun* Kudos",
+  "home.footer.general_rules": "Tiêu chuẩn chung",
+
+  "home.notification.aria_label": "Mở thông báo",
+  "home.notification.toast.coming_soon": "Tính năng đang được phát triển. Vui lòng quay lại sau nhé!",
+
+  "home.fab.write_kudos": "Viết Kudos",
+  "home.fab.read_rules": "Đọc thể lệ",
+
+  "home.profile.profile": "Hồ sơ",
+  "home.profile.sign_out": "Đăng xuất"
 }

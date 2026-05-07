@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat, Montserrat_Alternates } from "next/font/google";
+
+import Toaster from "@/src/components/ui/Toaster";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,7 +42,10 @@ export default function RootLayout({
       lang="vi"
       className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${montserratAlternates.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

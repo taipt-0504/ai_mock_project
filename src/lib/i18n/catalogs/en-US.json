@@ -6,5 +6,65 @@
   "loginButton.errorGeneric": "We couldn't sign you in. Please try again.",
   "loginButton.errorCookies": "Cookies are blocked. Please enable cookies for this site and try again.",
   "loginButton.errorCancelled": "Google sign-in was cancelled.",
-  "footer.copyright": "© 2025 Sun* — All rights reserved."
+  "footer.copyright": "© 2025 Sun* — All rights reserved.",
+
+  "home.hero.subtitle": "Coming soon",
+  "home.hero.countdown.days": "DAYS",
+  "home.hero.countdown.hours": "HOURS",
+  "home.hero.countdown.minutes": "MINUTES",
+
+  "home.nav.about": "About SAA 2025",
+  "home.nav.awards": "Award Information",
+  "home.nav.kudos": "Sun* Kudos",
+
+  "home.event.time.label": "Time:",
+  "home.event.time.value": "December 26, 2025",
+  "home.event.location.label": "Venue:",
+  "home.event.location.value": "Au Co Art Center",
+  "home.event.facebook": "Live broadcast via Livestream",
+
+  "home.cta.about_awards": "ABOUT AWARDS",
+  "home.cta.about_kudos": "ABOUT KUDOS",
+
+  "home.essay.paragraph1": "Sun Annual Awards 2025 returns under the theme ROOT FURTHER — celebrating those who dare to root deeply in their core values and reach further every single day.",
+  "home.essay.paragraph2": "We believe every person and every team at Sun* carries a story worth telling — a story of effort, of creativity, and of perseverance.",
+  "home.essay.paragraph3": "ROOT FURTHER is the moment for the Sun* community to look back on a year together, to honour the quiet contributions, and to inspire the journey ahead.",
+  "home.essay.quote": "Root deeply — Reach further.",
+
+  "home.awards.section.caption": "Awards System",
+  "home.awards.section.heading": "Award Categories",
+  "home.awards.section.lead": "Six categories — six journeys to shine. Explore each award and its nomination criteria.",
+  "home.awards.section.detail_button": "Details",
+
+  "home.awards.top_talent.title": "Top Talent",
+  "home.awards.top_talent.description": "Recognising the most outstanding individuals — those whose contributions inspire the Sun* community.",
+  "home.awards.top_project.title": "Top Project",
+  "home.awards.top_project.description": "Honouring landmark projects that delivered exceptional value to clients and to Sun* throughout 2025.",
+  "home.awards.top_project_leader.title": "Top Project Leader",
+  "home.awards.top_project_leader.description": "For Project Leaders who guided their teams through challenges and delivered remarkable results.",
+  "home.awards.best_manager.title": "Best Manager",
+  "home.awards.best_manager.description": "Recognising managers who inspire, nurture our Sun* culture, and grow great people.",
+  "home.awards.signature_2025_creator.title": "Signature 2025 - Creator",
+  "home.awards.signature_2025_creator.description": "Celebrating the creative signature of the year — a product or initiative that carries the Sun* spirit.",
+  "home.awards.mvp.title": "MVP (Most Valuable Person)",
+  "home.awards.mvp.description": "Most Valuable Player — the contributor who created lasting, meaningful value for Sun* this year.",
+
+  "home.kudos.label": "Recognition Movement",
+  "home.kudos.title": "Sun* Kudos",
+  "home.kudos.description": "WHAT'S NEW IN SAA 2025\nA company-wide recognition movement — the first of its kind, open to every Sunner. Launching in November 2025, the system invites Sun* people to share thanks and appreciation with colleagues. These messages will inform the Heads Council as they select this year's award recipients.",
+  "home.kudos.detail_button": "Details",
+
+  "home.footer.about": "About SAA 2025",
+  "home.footer.awards": "Award Information",
+  "home.footer.kudos": "Sun* Kudos",
+  "home.footer.general_rules": "General Rules",
+
+  "home.notification.aria_label": "Open notifications",
+  "home.notification.toast.coming_soon": "Feature in development. Please check back soon!",
+
+  "home.fab.write_kudos": "Write Kudos",
+  "home.fab.read_rules": "Read general rules",
+
+  "home.profile.profile": "Profile",
+  "home.profile.sign_out": "Sign out"
 }

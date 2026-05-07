@@ -18,6 +18,7 @@ const schema = z.object({
     .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
     .transform((v) => v === "true" || v === "1")
     .optional(),
+  SAA_EVENT_START_AT: z.string().optional(),
 });
 
 const parsed = schema.parse(process.env);
@@ -37,6 +38,7 @@ export const config = {
   NODE_ENV: parsed.NODE_ENV,
   AUTH_TRUST_HOST: parsed.AUTH_TRUST_HOST ?? false,
   DATABASE_URL_TEST: parsed.DATABASE_URL_TEST,
+  SAA_EVENT_START_AT: parsed.SAA_EVENT_START_AT,
   /** Lazy — throws on access if `.env.local` is missing the value. */
   get DATABASE_URL(): string {
     return required("DATABASE_URL");

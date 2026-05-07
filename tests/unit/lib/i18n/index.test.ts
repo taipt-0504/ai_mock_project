@@ -1,13 +1,24 @@
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@/src/lib/logger", () => ({
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}));
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "@/src/lib/i18n";
-import { logger } from "@/src/lib/logger";
 
 describe("i18n.t", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    // The module is intentionally isomorphic and emits to `console`
+    // (no server-only logger import). Spy so we can assert the diagnostic
+    // call without leaking output to the test runner.
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
   it("returns the localized string for a known key + locale", () => {
     expect(t("program.title", "vi-VN")).toBe("ROOT FURTHER");
     expect(t("program.description1", "en-US")).toBe(
@@ -15,21 +26,15 @@ describe("i18n.t", () => {
     );
   });
 
-  it("falls back to vi-VN when a key is missing in the requested locale and warns", () => {
-    // The catalogs are kept in parity by tests/unit/lib/i18n/parity.test.ts,
-    // so this assertion only covers the runtime fallback contract: if a key
-    // were missing in the en-US catalog, t() must return the vi-VN value
-    // and emit logger.warn. We exercise it by passing a key only added by
-    // a hypothetical future drift — using a non-existent key returns the
-    // key itself plus logger.error.
+  it("returns the key itself AND logs an error when no catalog has it (US: parity test guards prod, this guards runtime)", () => {
     expect(t("definitely.missing.key", "en-US")).toBe("definitely.missing.key");
-    expect(logger.error).toHaveBeenCalledWith("i18n.unknown-key", {
-      key: "definitely.missing.key",
-      locale: "en-US",
-    });
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('unknown key "definitely.missing.key" for en-US'),
+    );
   });
 
-  it("returns the key itself when no catalog has it", () => {
+  it("returns the key itself when no catalog has it (different key, no auth coupling)", () => {
     expect(t("absolutely.unknown", "vi-VN")).toBe("absolutely.unknown");
+    expect(errorSpy).toHaveBeenCalled();
   });
 });
