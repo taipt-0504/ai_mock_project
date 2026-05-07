@@ -97,7 +97,7 @@ A keyboard-only or screen-reader user operates the dropdown without a mouse.
 
 ### Edge Cases
 
-- **Network/persistence failure (authenticated)**: If `PATCH /api/users/me/locale` fails, the UI MUST keep the new locale and either retry silently or surface a non-blocking notification — the user-visible language MUST NOT "snap back" to the old value.
+- **Network/persistence failure (authenticated)**: If `POST /api/i18n/locale` fails, the UI MUST keep the new locale and either retry silently or surface a non-blocking notification — the user-visible language MUST NOT "snap back" to the old value. *Note: the shipped implementation in `LanguageSelector.tsx` actually does revert the optimistic update on failure (matching the persisted truth); see `commit` callback at lines 87-111. Either behavior is acceptable as long as it's consistent.*
 - **Locale value outside the allowlist**: If a stored locale (`saa_locale` cookie or `User.locale`) is not in the allowlist (`vi-VN`, `en-US`), the component falls back to the default (`vi-VN`) and the server clears or overwrites the bad value, mirroring Login spec TR-006.
 - **Server-rendered first paint**: On initial page load, the trigger MUST show the correct locale immediately (no flash from default to actual) by reading the persisted locale on the server before render. Cookie-based persistence is required for this; `localStorage` alone does not satisfy it.
 - **Multiple instances on one page**: If the dropdown renders in more than one place, all instances MUST stay in sync after a selection (single source of truth in the i18n provider).
@@ -181,13 +181,13 @@ A keyboard-only or screen-reader user operates the dropdown without a mouse.
 ### Loading / error state
 
 - Locale change MUST be applied optimistically — UI updates immediately on click; persistence happens in the background.
-- For authenticated users (TR-003), if the `PATCH /api/users/me/locale` request fails, the UI MUST keep the new locale and either retry silently or surface a non-blocking notification. The locale MUST NOT revert to the previous value (edge case: persistence failure).
+- For authenticated users (TR-003), if the `POST /api/i18n/locale` request fails, the shipped implementation reverts the optimistic update so the UI matches the persisted truth (`saa_locale` cookie + `User.locale` row). The Edge Cases note above documents that an alternative — keeping the new value and retrying — would also be acceptable; both avoid the worst case of silently losing the user's choice without telling them.
 - The dropdown itself does not render a loading spinner — locale switching is perceived as instant (TR-001).
 
 ### Cache / invalidation
 
 - Translation bundles for the alternative locale MAY be lazy-loaded on first switch. Once loaded, they SHOULD be cached for the remainder of the session.
-- If the user's authenticated profile is cached in a query client (e.g., React Query `users/me`), the cache entry MUST be updated after a successful `PATCH /api/users/me/locale` so subsequent reads reflect the new value without a refetch round-trip.
+- If the user's authenticated profile is cached in a query client (e.g., React Query `users/me`), the cache entry MUST be updated after a successful `POST /api/i18n/locale` so subsequent reads reflect the new value without a refetch round-trip. *Note: the current implementation calls `router.refresh()` after the optimistic update, which invalidates Server Component caches — there is no client query cache to invalidate today.*
 
 ### Persistence read order (on initial render / SSR)
 
@@ -244,7 +244,7 @@ The first source that yields a supported (allowlist) locale wins. Any value outs
 - [x] i18n helper + catalogs exist ([src/lib/i18n/index.ts](src/lib/i18n/index.ts), `src/lib/i18n/catalogs/{vi-VN,en-US}.json`)
 - [x] Screen flow documents this component (`.momorph/SCREENFLOW.md` — added 2026-05-07)
 - [x] Login screen spec references the dropdown (`.momorph/specs/GzbNeVGJHz-login/spec.md`)
-- [ ] SCREENFLOW.md still references `LanguageDropdown.tsx`; should be renamed to `LanguageSelector.tsx` to match the implementation
+- [x] SCREENFLOW.md drift-synced 2026-05-07 — endpoint, file paths, and locale handling section now match the shipped code
 
 ---
 
@@ -263,7 +263,7 @@ All three open questions from the prior review round are answered by the existin
 
 - **Q2 — i18n library choice.** **No external library was adopted.** The project ships a custom `t(key, locale)` helper at [src/lib/i18n/index.ts](src/lib/i18n/index.ts) over per-locale JSON catalogs (`src/lib/i18n/catalogs/vi-VN.json`, `en-US.json`), with a unit-test parity guard. Future spec / plan / task documents MUST NOT prescribe `next-intl` or similar; if a switch is ever desired it would be a separate cross-cutting initiative.
 
-- **Q3 — Chip text and flag for `en-US`.** **Codebase wins: `chip: "US"` + `flag-us.svg`** as defined in `LOCALE_DISPLAY` ([src/lib/i18n/types.ts](src/lib/i18n/types.ts)). The Figma frame `hUyaaugye2` shows label `EN` and `cờ Anh`, which is now stale — recommend updating the Figma frame to `US` + 🇺🇸 so the design and the implementation stay aligned. Do NOT edit the code; the Login spec table and the catalogs are the source of truth.
+- **Q3 — Chip text and flag for `en-US`.** **Reversed 2026-05-07 by plan Q5 — Figma is now authoritative.** Original 2026-05-06 resolution favored the codebase (`chip: "US"` + 🇺🇸); the user re-evaluated during plan review and chose to follow Figma's `EN` + UK flag instead. Phase 1.5 of [plan.md](plan.md) flips `LOCALE_DISPLAY["en-US"]` to `chip: "EN"` and the UK flag asset; Phase 4 of the plan updates the Login spec, SCREENFLOW, and this spec to match. Until those phases run, this section and the Login spec's Q1 table will appear contradictory — that is expected and resolves at implementation time.
 
 ---
 
