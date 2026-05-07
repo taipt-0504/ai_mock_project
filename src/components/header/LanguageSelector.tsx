@@ -86,6 +86,12 @@ export default function LanguageSelector({
 
   const commit = useCallback(
     async (target: SupportedLocale) => {
+      // FR-010: clicking the already-active row is a strict no-op — close menu only.
+      if (target === optimisticLocale) {
+        setIsOpen(false);
+        return;
+      }
+
       const previous = optimisticLocale;
       setOptimisticLocale(target);
       setIsOpen(false);
@@ -155,7 +161,7 @@ export default function LanguageSelector({
         aria-label={`Language: ${display.chip}`}
         onClick={() => setIsOpen((v) => !v)}
         onKeyDown={onTriggerKeyDown}
-        className="flex h-14 w-[108px] items-center justify-between gap-0.5 rounded p-4"
+        className="flex h-14 w-[108px] items-center justify-between gap-0.5 rounded-sm p-4"
       >
         <span className="flex h-6 w-[53px] items-center gap-1">
           <Image src={display.flagAsset} alt="" width={24} height={24} />
@@ -168,7 +174,11 @@ export default function LanguageSelector({
           alt=""
           width={24}
           height={24}
-          className={isOpen ? "rotate-180 transition-transform" : "transition-transform"}
+          className={
+            isOpen
+              ? "rotate-180 motion-safe:transition-transform"
+              : "motion-safe:transition-transform"
+          }
         />
       </button>
       {isOpen && (
@@ -178,7 +188,7 @@ export default function LanguageSelector({
           role="menu"
           aria-label="Language"
           onKeyDown={onMenuKeyDown}
-          className="absolute right-0 top-full z-20 mt-2 flex w-[140px] flex-col rounded-md border border-saa-divider bg-saa-page py-1 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-2 flex flex-col rounded-lg border border-saa-dropdown-border bg-saa-dropdown-surface p-1.5"
         >
           {SUPPORTED_LOCALES.map((option, index) => {
             const item = LOCALE_DISPLAY[option];
@@ -192,7 +202,7 @@ export default function LanguageSelector({
                 tabIndex={index === activeIndex ? 0 : -1}
                 onClick={() => void commit(option)}
                 onMouseEnter={() => setActiveIndex(index)}
-                className="flex items-center gap-2 px-4 py-2 text-left font-display text-base font-bold text-saa-page-fg hover:bg-saa-header-overlay aria-[current=true]:opacity-80"
+                className="flex h-14 w-[110px] items-center gap-1 rounded-sm p-4 text-left font-display text-base font-bold leading-6 tracking-[0.15px] text-saa-page-fg hover:bg-saa-button-primary/10 aria-[current=true]:bg-saa-button-primary/20"
               >
                 <Image src={item.flagAsset} alt="" width={24} height={24} />
                 <span>{item.chip}</span>

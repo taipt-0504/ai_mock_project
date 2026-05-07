@@ -35,7 +35,7 @@ The "Open Questions" section at the end of this document records how the codebas
 
 ## Overview
 
-Reusable language switcher component that lets users toggle the application UI between Vietnamese (`vi-VN`, chip `VN`) and English (`en-US`, chip `US`). Rendered as a compact dropdown trigger in the header of any screen with localized chrome (confirmed: Login `GzbNeVGJHz`; planned: Homepage SAA and other authenticated screens with the same header per `.momorph/SCREENFLOW.md`). Clicking the trigger opens a menu listing all supported locales with the active one styled as "selected"; clicking the inactive locale switches the active locale, persists the choice, and closes the menu.
+Reusable language switcher component that lets users toggle the application UI between Vietnamese (`vi-VN`, chip `VN`) and English (`en-US`, chip `EN`). Rendered as a compact dropdown trigger in the header of any screen with localized chrome (confirmed: Login `GzbNeVGJHz`; planned: Homepage SAA and other authenticated screens with the same header per `.momorph/SCREENFLOW.md`). Clicking the trigger opens a menu listing all supported locales with the active one styled as "selected"; clicking the inactive locale switches the active locale, persists the choice, and closes the menu.
 
 **Target users**: All end users of the application (authenticated and unauthenticated). `vi-VN` is the default locale per the SAA 2025 program.
 
@@ -55,10 +55,10 @@ A user viewing the application in their non-preferred language opens the dropdow
 
 **Acceptance Scenarios**:
 
-1. **Given** the trigger shows the chip for the active locale (`VN` for `vi-VN`) and the menu is closed, **When** the user clicks the trigger, **Then** the menu opens and lists all supported locales (`VN` for `vi-VN`, `US` for `en-US`) with the active locale styled as "selected".
-2. **Given** the menu is open and `vi-VN` is the active locale, **When** the user clicks the `en-US` row, **Then** the menu closes, the trigger now shows the `US` chip, and all localized strings on the screen update to English without a hard reload.
-3. **Given** the user has switched the locale to `en-US`, **When** they reload the page or navigate to another screen, **Then** the trigger still shows the `US` chip and the new screen renders in English.
-4. **Given** the trigger shows the `US` chip, **When** the user opens the menu and clicks the `vi-VN` row, **Then** the trigger updates to the `VN` chip and the UI re-renders in Vietnamese.
+1. **Given** the trigger shows the chip for the active locale (`VN` for `vi-VN`) and the menu is closed, **When** the user clicks the trigger, **Then** the menu opens and lists all supported locales (`VN` for `vi-VN`, `EN` for `en-US`) with the active locale styled as "selected".
+2. **Given** the menu is open and `vi-VN` is the active locale, **When** the user clicks the `en-US` row, **Then** the menu closes, the trigger now shows the `EN` chip, and all localized strings on the screen update to English without a hard reload.
+3. **Given** the user has switched the locale to `en-US`, **When** they reload the page or navigate to another screen, **Then** the trigger still shows the `EN` chip and the new screen renders in English.
+4. **Given** the trigger shows the `EN` chip, **When** the user opens the menu and clicks the `vi-VN` row, **Then** the trigger updates to the `VN` chip and the UI re-renders in Vietnamese.
 5. **Given** the menu is open and `vi-VN` is the active locale, **When** the user clicks the already-active `vi-VN` row, **Then** the menu closes, no locale change is dispatched, no persistence call is made, and no re-render occurs (FR-009).
 
 ---
@@ -136,7 +136,7 @@ A keyboard-only or screen-reader user operates the dropdown without a mouse.
 ### Functional Requirements
 
 - **FR-001**: System MUST support exactly the locales in the project allowlist — `vi-VN` (default) and `en-US`. The allowlist itself is owned by the Login spec **TR-006**; this component only reads it.
-- **FR-002**: System MUST display the active locale's chip (`VN` for `vi-VN`, `US` for `en-US` per Login spec; pending Q3) plus a flag indicator on the dropdown trigger.
+- **FR-002**: System MUST display the active locale's chip (`VN` for `vi-VN`, `EN` for `en-US` per Q5 resolution) plus a flag indicator on the dropdown trigger.
 - **FR-003**: Users MUST be able to toggle the menu open and closed by clicking the trigger.
 - **FR-004**: When the menu is open, the system MUST render one row per supported locale, with the currently-active locale styled as "selected".
 - **FR-005**: Users MUST be able to switch the active locale by clicking any non-active row.
@@ -161,7 +161,7 @@ A keyboard-only or screen-reader user operates the dropdown without a mouse.
 ### Key Entities
 
 - **Locale**: BCP 47 locale code. Allowed values: `vi-VN`, `en-US`. Default: `vi-VN`. Canonical allowlist defined as `SUPPORTED_LOCALES` in [src/lib/i18n/types.ts](src/lib/i18n/types.ts) and enforced by `isSupportedLocale()` everywhere a locale value is read.
-- **Chip code**: Short label rendered on the dropdown trigger and rows. Mapping defined in `LOCALE_DISPLAY` ([src/lib/i18n/types.ts](src/lib/i18n/types.ts)): `vi-VN` → `{ chip: "VN", flagAsset: "/assets/header/icons/flag-vn.svg" }`, `en-US` → `{ chip: "US", flagAsset: "/assets/header/icons/flag-us.svg" }`. The Figma frame `hUyaaugye2` (last edited 2026-01-30) renders the English row as label `EN` with `cờ Anh` ("English flag" — typically UK); the codebase ships with `US` + US flag (committed 2026-05-06). The codebase is authoritative; the Figma frame is stale and SHOULD be updated.
+- **Chip code**: Short label rendered on the dropdown trigger and rows. Mapping defined in `LOCALE_DISPLAY` ([src/lib/i18n/types.ts](src/lib/i18n/types.ts)): `vi-VN` → `{ chip: "VN", flagAsset: "/assets/header/icons/flag-vn.svg" }`, `en-US` → `{ chip: "EN", flagAsset: "/assets/header/icons/flag-en.svg" }`. Aligned 2026-05-07 with Figma frame `hUyaaugye2` per Q5 resolution (was `US` + US flag in the original 2026-05-06 Login-spec resolution).
 - **Persistence locations**: `saa_locale` cookie (always); `User.locale` column on the `User` table (authenticated only, non-null, default `"vi-VN"`).
 
 ---

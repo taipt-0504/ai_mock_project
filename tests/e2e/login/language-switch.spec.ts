@@ -34,13 +34,13 @@ test.describe("Login language switch (US3)", () => {
     await page.goto("/login");
     await expect(page.getByAltText(viCatalog["program.title"])).toBeVisible();
 
-    // Open dropdown, pick US.
+    // Open dropdown, pick EN.
     await page.getByRole("button", { name: /Language: VN/i }).click();
-    await page.getByRole("menuitem", { name: /US/i }).click();
+    await page.getByRole("menuitem", { name: /EN/i }).click();
 
     // Chip flips immediately (optimistic).
     await expect(
-      page.getByRole("button", { name: /Language: US/i }),
+      page.getByRole("button", { name: /Language: EN/i }),
     ).toBeVisible();
 
     // Cookie is set client-side.
@@ -135,7 +135,7 @@ test.describe("Login language switch (US3)", () => {
     await page.keyboard.press("Enter");
 
     await expect(
-      page.getByRole("button", { name: /Language: US/i }),
+      page.getByRole("button", { name: /Language: EN/i }),
     ).toBeVisible();
   });
 });

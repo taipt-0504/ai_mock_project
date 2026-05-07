@@ -41,7 +41,7 @@ describe("LanguageSelector — disclosure dropdown (T063)", () => {
     const items = screen.getAllByRole("menuitem");
     expect(items).toHaveLength(2); // vi-VN + en-US
     expect(items[0]).toHaveTextContent("VN");
-    expect(items[1]).toHaveTextContent("US");
+    expect(items[1]).toHaveTextContent("EN");
   });
 
   it("ArrowDown / ArrowUp move the active item, Enter commits the selection", () => {
@@ -55,7 +55,7 @@ describe("LanguageSelector — disclosure dropdown (T063)", () => {
 
     // After commit the menu closes and the chip flips to the new selection.
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /us/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /en/i })).toBeInTheDocument();
   });
 
   it("Escape closes the menu without changing the selection", () => {
@@ -83,7 +83,7 @@ describe("LanguageSelector — disclosure dropdown (T063)", () => {
   it("commits the saa_locale cookie on selection (unauthenticated path)", () => {
     render(<LanguageSelector locale="vi-VN" />);
     fireEvent.click(screen.getByRole("button", { name: /vn/i }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /us/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /en/i }));
 
     expect(document.cookie).toContain("saa_locale=en-US");
     // Unauthenticated callers MUST NOT POST to the API (server returns 401).
@@ -95,7 +95,7 @@ describe("LanguageSelector — disclosure dropdown (T063)", () => {
   it("POSTs to /api/i18n/locale on selection when authenticated", async () => {
     render(<LanguageSelector locale="vi-VN" isAuthenticated />);
     fireEvent.click(screen.getByRole("button", { name: /vn/i }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /us/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /en/i }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -109,14 +109,34 @@ describe("LanguageSelector — disclosure dropdown (T063)", () => {
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({ locale: "en-US" });
   });
 
+  it("clicking the already-active row is a strict no-op (FR-010)", () => {
+    render(<LanguageSelector locale="vi-VN" isAuthenticated />);
+    fireEvent.click(screen.getByRole("button", { name: /vn/i }));
+
+    // Sanity: menu open, two items, the VN row is currently active.
+    const items = screen.getAllByRole("menuitem");
+    expect(items[0]).toHaveTextContent("VN");
+
+    fireEvent.click(items[0]);
+
+    // Menu closes (the only side effect FR-010 allows).
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    // Trigger still shows VN — locale unchanged.
+    expect(screen.getByRole("button", { name: /vn/i })).toBeInTheDocument();
+    // No locale-change side effects.
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(document.cookie).not.toContain("saa_locale=");
+  });
+
   it("reverts the optimistic locale when the API call fails", async () => {
     fetchMock.mockResolvedValue(new Response("internal", { status: 500 }));
     render(<LanguageSelector locale="vi-VN" isAuthenticated />);
     fireEvent.click(screen.getByRole("button", { name: /vn/i }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /us/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /en/i }));
 
     // Optimistic flip happens immediately.
-    expect(screen.getByRole("button", { name: /us/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /en/i })).toBeInTheDocument();
 
     // After the API fails, the chip reverts.
     await waitFor(() => {

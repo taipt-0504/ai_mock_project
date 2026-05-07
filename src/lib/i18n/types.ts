@@ -19,13 +19,13 @@ export function isSupportedLocale(value: unknown): value is SupportedLocale {
 }
 
 /**
- * Display map for the A.2 language chip — chip code (2-letter country style)
- * and flag asset path. Login spec FR-007 mandates these visuals.
+ * Display map for the A.2 language chip — chip code (2-letter language style)
+ * and flag asset path. Sourced from Figma frame hUyaaugye2 (dropdown design).
  */
 export const LOCALE_DISPLAY: Record<
   SupportedLocale,
   { chip: string; flagAsset: string }
 > = {
   "vi-VN": { chip: "VN", flagAsset: "/assets/header/icons/flag-vn.svg" },
-  "en-US": { chip: "US", flagAsset: "/assets/header/icons/flag-us.svg" },
+  "en-US": { chip: "EN", flagAsset: "/assets/header/icons/flag-en.svg" },
 };

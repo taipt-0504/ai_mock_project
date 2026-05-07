@@ -19,6 +19,10 @@
 
   /* Footer */
   --color-saa-divider: #2e3940;
+
+  /* Language dropdown surface (sourced from Figma frame hUyaaugye2). */
+  --color-saa-dropdown-surface: #00070c;
+  --color-saa-dropdown-border: #998c5f;
 }
 
 @theme inline {
@@ -38,6 +42,8 @@
   --color-saa-button-primary: var(--color-saa-button-primary);
   --color-saa-button-primary-fg: var(--color-saa-button-primary-fg);
   --color-saa-divider: var(--color-saa-divider);
+  --color-saa-dropdown-surface: var(--color-saa-dropdown-surface);
+  --color-saa-dropdown-border: var(--color-saa-dropdown-border);
 }
 
 body {

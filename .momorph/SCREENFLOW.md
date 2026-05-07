@@ -56,7 +56,7 @@ renders the same header.
 - `Dropdown-List` (`525:11713`) — main container.
   - Selected display row: chip "VN" with Vietnam flag, dark grey background.
   - Item `tiếng Việt` (`I525:11713;362:6085`) — selects `vi-VN` (chip `VN`).
-  - Item `tiếng Anh` (`I525:11713;362:6128`, 110×56, dark background) — selects `en-US` (chip `US`).
+  - Item `tiếng Anh` (`I525:11713;362:6128`, 110×56, dark background) — selects `en-US` (chip `EN`).
 
 **Behavior**:
 - Click on header chip → opens this overlay.
@@ -172,7 +172,7 @@ flowchart TD
   to `/login` are redirected before any markup is sent.
 
 ### Locale Handling (Dropdown — Language)
-- Default locale: `vi-VN` (chip `VN`); alternative `en-US` (chip `US`).
+- Default locale: `vi-VN` (chip `VN`); alternative `en-US` (chip `EN`).
 - Allowlisted locales: `vi-VN`, `en-US`. Single source of truth for the allowlist + chip + flag map: [src/lib/i18n/types.ts](src/lib/i18n/types.ts) (`SUPPORTED_LOCALES`, `LOCALE_DISPLAY`). Server-side enforcement per Login spec TR-006 lives in [src/lib/cookies/saa-locale.ts](src/lib/cookies/saa-locale.ts) (`getSaaLocale` clears tampered values).
 - Unauthenticated users: `saa_locale` cookie only (1y, `SameSite=Lax`, `Path=/`, `HttpOnly=false`).
 - Authenticated users: cookie + `User.locale` row, updated via `POST /api/i18n/locale` (optimistic UI, reverted in `LanguageSelector.tsx` if the call fails).
@@ -190,6 +190,7 @@ flowchart TD
 | 2026-05-06 | Initial survey | Login (`GzbNeVGJHz`) | Spec + plan + tasks completed; outgoing edges to Homepage and Dropdown — Language confirmed. |
 | 2026-05-07 | Component survey | Dropdown — Language (`hUyaaugye2`) | Reusable overlay; VN + EN items mapped; no navigation edges. |
 | 2026-05-07 | Drift sync | Dropdown — Language (`hUyaaugye2`) | Aligned doc with shipped code: API path `POST /api/i18n/locale` (was `PATCH /api/users/me/locale`); component file `LanguageSelector.tsx` (was `LanguageDropdown.tsx`); expanded Locale Handling section with concrete file paths; noted that frame `hUyaaugye2` is a visual refresh, not a new build. |
+| 2026-05-07 | Chip flip (Q5) | Dropdown — Language (`hUyaaugye2`) | English chip flipped from `US` (🇺🇸) → `EN` (🇬🇧) to match Figma frame `hUyaaugye2`. `LOCALE_DISPLAY` updated; `flag-en.svg` added; `flag-us.svg` removed; tests + Login spec Q1 audit log + this doc all synced. Locale code `en-US` unchanged. |
 
 ---
 

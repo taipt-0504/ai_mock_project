@@ -276,10 +276,10 @@ are rendered as static, non-interactive copy in the hero region.
   return the Login screen to its idle state, and MUST display a generic error message that does
   NOT leak provider-internal details.
 - **FR-007**: System MUST display the language selector (`A.2`) in the header with: the
-  current chip code (a 2-letter, country-style label such as `VN` for `vi-VN`, `US` for
-  `en-US`), the matching country flag indicator on the leading side, and a chevron indicator
-  on the trailing side. The chip code is a display label only — internal state and
-  persistence use BCP 47 locale codes (TR-006 allowlist).
+  current chip code (a 2-letter, language-style label such as `VN` for `vi-VN`, `EN` for
+  `en-US`), the matching language flag indicator on the leading side, and a chevron
+  indicator on the trailing side. The chip code is a display label only — internal state
+  and persistence use BCP 47 locale codes (TR-006 allowlist).
 - **FR-008**: Default locale on first visit MUST be Vietnamese — internal locale code
   `vi-VN`, displayed in the A.2 chip as `VN` (the 2-letter country code per FR-007's chip
   format).
@@ -387,7 +387,7 @@ are rendered as static, non-interactive copy in the hero region.
     | BCP 47 locale | Chip code | Flag indicator | Order in dropdown |
     |---------------|-----------|----------------|-------------------|
     | `vi-VN` | `VN` | Vietnam flag (🇻🇳) | 1 (default) |
-    | `en-US` | `US` | United States flag (🇺🇸) | 2 |
+    | `en-US` | `EN` | UK flag (🇬🇧) | 2 |
 
     Any value outside this allowlist read from a cookie, query param, or `User.locale`
     column MUST be rejected and replaced with `vi-VN` (TR-006). Adding a new locale requires
@@ -557,9 +557,11 @@ call is made. The `saa_locale` cookie MUST be set with `Path=/`, `SameSite=Lax`,
 
 All open questions have been answered; the spec is self-contained for `/momorph.plan`.
 
-- ✅ **Q1 — Supported locales** (resolved 2026-05-06): `vi-VN` (chip `VN`, default) +
-  `en-US` (chip `US`). Canonical table in **Key Entities → Language preference**; allowlist
-  enforced by TR-006.
+- ✅ **Q1 — Supported locales** (resolved 2026-05-06; revised 2026-05-07): `vi-VN`
+  (chip `VN`, default) + `en-US` (chip `EN`). The 2026-05-06 round picked chip `US` + 🇺🇸;
+  revised 2026-05-07 to chip `EN` + 🇬🇧 to match Figma frame `hUyaaugye2` ("Dropdown-ngôn
+  ngữ") which renders the English row with label `EN` and `cờ Anh` (UK flag). Canonical
+  table in **Key Entities → Language preference**; allowlist enforced by TR-006.
 - ✅ **Q2 — Auth.js session strategy** (resolved 2026-05-06): **database sessions**
   (`session.strategy = "database"`), per Principle IV — A07. Locked into TR-003 and the
   `Session` Key Entity entry; revocation behavior added to TR-002 and the cross-tab logout
