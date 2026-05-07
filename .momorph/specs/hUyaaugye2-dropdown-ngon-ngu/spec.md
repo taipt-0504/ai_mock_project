@@ -4,7 +4,7 @@
 **Frame Name**: `Dropdown-ngôn ngữ`
 **File Key**: `9ypp4enmFmdK3YAFJLIu6C`
 **Created**: 2026-05-07
-**Status**: Draft (UI refresh of an already-shipped component — see "Implementation Status")
+**Status**: Implemented (UI refresh shipped 2026-05-07). All 28 tasks in [tasks.md](tasks.md) are `[x]`; behavioral surface (component, API, cookie, locale persistence) is unchanged from commit `8c0022f`. The "Implementation Status" section below stays as the regression-guard reference.
 
 ---
 

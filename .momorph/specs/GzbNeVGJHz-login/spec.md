@@ -4,7 +4,7 @@
 **Frame Name**: `Login`
 **File Key**: `9ypp4enmFmdK3YAFJLIu6C`
 **Created**: 2026-05-06
-**Status**: Ready for Plan
+**Status**: Implemented (shipped in commit `8c0022f` — full screen + tests). 77/79 tasks complete in [tasks.md](tasks.md); the two remaining `[ ]` are: **T007** human-only stakeholder approval (PR-description signal, not a code task) and **T034** deferred per Vitest 4's `next-auth` resolver limitation (abuse-case coverage moved to E2E T051).
 
 ---
 

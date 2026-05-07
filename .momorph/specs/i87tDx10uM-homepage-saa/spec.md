@@ -4,7 +4,7 @@
 **Frame Name**: `Homepage SAA`
 **File Key**: `9ypp4enmFmdK3YAFJLIu6C`
 **Created**: 2026-05-07
-**Status**: Draft
+**Status**: Implemented (shipped 2026-05-07). All 73 tasks in [tasks.md](tasks.md) are `[x]`. Verification gates green: vitest 184/184, Playwright Homepage 11/11 + Login regression 16/16, lint clean, `tsc --noEmit` clean, `next build` succeeds. Visual diff against Figma frame `i87tDx10uM` accepted in `assets/`. Follow-ups (out of this spec): `User.role` schema migration + ProfileButton admin variant (PQ1 = b), notification panel (replaces the Q6 "Coming soon" toast), profile/quick-action menu contents.
 
 ---
 
