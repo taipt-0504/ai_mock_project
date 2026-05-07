@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find ~/.cache/ms-playwright -name \"chrome*\" -type f 2>/dev/null | grep -v \"\\\\.dwp\" | head -5)",
-      "Read(//home/phungthetai/.cache/ms-playwright/**)"
-    ]
-  }
-}
