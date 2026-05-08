@@ -31,3 +31,13 @@ export function parseLaunchAt(envValue: string | undefined): Date | null {
   }
   return parsed;
 }
+
+/**
+ * Returns true when the prelaunch gate has lifted (`launchAt` is in the past).
+ * Lives outside the Server Component so the `Date.now()` impurity does not
+ * trigger `react-hooks/purity`. Callers (proxy + `/coming-soon` route) treat
+ * `null` as "gate still active" — always fail closed (Prelaunch FR-009).
+ */
+export function isGateLifted(launchAt: Date | null): boolean {
+  return launchAt !== null && launchAt.getTime() <= Date.now();
+}

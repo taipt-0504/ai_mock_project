@@ -93,6 +93,19 @@ body {
   );
 }
 
+/* SAA 2025 — Prelaunch gate (Figma node 2268:35130, frame 8PJQswPZmU). Diagonal
+   dark cover layered on top of the prelaunch background so the centered
+   countdown stays legible. Distinct from the Login fades (different angle and
+   stop schedule). Inline rgba values match Figma exactly. */
+.saa-overlay-prelaunch-cover {
+  background: linear-gradient(
+    18deg,
+    var(--color-saa-page-bg) 15.48%,
+    rgba(0, 18, 29, 0.46) 52.13%,
+    rgba(0, 19, 32, 0) 63.41%
+  );
+}
+
 /* SAA 2025 — Profile dropdown menu item hover treatment (sourced from Figma
    frame z4sCl3_Qtk). Faint highlight background + golden text glow, applied
    on hover and keyboard focus for both Profile and Sign-out items. */

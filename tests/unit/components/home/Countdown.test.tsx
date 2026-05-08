@@ -5,6 +5,7 @@ import Countdown from "@/src/components/home/Countdown";
 import viCatalog from "@/src/lib/i18n/catalogs/vi-VN.json";
 
 const SUBTITLE = viCatalog["home.hero.subtitle"];
+const PRELAUNCH_HEADING = viCatalog["prelaunch.heading"];
 const DAYS = viCatalog["home.hero.countdown.days"];
 const HOURS = viCatalog["home.hero.countdown.hours"];
 const MINUTES = viCatalog["home.hero.countdown.minutes"];
@@ -113,5 +114,76 @@ describe("Countdown (US1)", () => {
     expect(tiles.days).toBe("01");
     expect(tiles.hours).toBe("01");
     expect(tiles.minutes).toBe("55");
+  });
+});
+
+describe("Countdown — subtitleAs / subtitleKey props (Prelaunch FR-010, Q-CP5)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2025-12-30T18:30:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("defaults preserve Homepage rendering — <p> with home.hero.subtitle", () => {
+    const eventStart = new Date("2025-12-31T20:35:00.000Z");
+    render(<Countdown eventStart={eventStart} locale="vi-VN" />);
+
+    const subtitle = screen.getByText(SUBTITLE);
+    expect(subtitle.tagName).toBe("P");
+    // Should NOT be findable as a heading at any level.
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
+  it("subtitleAs='h1' + subtitleKey='prelaunch.heading' renders an <h1> with the prelaunch text", () => {
+    const eventStart = new Date("2025-12-31T20:35:00.000Z");
+    render(
+      <Countdown
+        eventStart={eventStart}
+        locale="vi-VN"
+        subtitleAs="h1"
+        subtitleKey="prelaunch.heading"
+      />,
+    );
+
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: PRELAUNCH_HEADING,
+    });
+    expect(heading).toBeInTheDocument();
+    // The default home.hero.subtitle MUST NOT appear when overridden.
+    expect(screen.queryByText(SUBTITLE)).not.toBeInTheDocument();
+  });
+
+  it("explicit subtitleKey with default subtitleAs='p' renders <p> with the overridden text", () => {
+    const eventStart = new Date("2025-12-31T20:35:00.000Z");
+    render(
+      <Countdown
+        eventStart={eventStart}
+        locale="vi-VN"
+        subtitleKey="prelaunch.heading"
+      />,
+    );
+
+    const overridden = screen.getByText(PRELAUNCH_HEADING);
+    expect(overridden.tagName).toBe("P");
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
+  it("subtitleAs='h1' is hidden when eventStart is in the past (zero-state) — same rule as default", () => {
+    const eventStart = new Date("2020-01-01T00:00:00.000Z");
+    render(
+      <Countdown
+        eventStart={eventStart}
+        locale="vi-VN"
+        subtitleAs="h1"
+        subtitleKey="prelaunch.heading"
+      />,
+    );
+
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+    expect(screen.queryByText(PRELAUNCH_HEADING)).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useState } from "react";
 
 import { t } from "@/src/lib/i18n";
 import type { SupportedLocale } from "@/src/lib/i18n/types";
@@ -38,9 +38,13 @@ function pad2(value: number): string {
 export default function Countdown({
   eventStart,
   locale,
+  subtitleAs = "p",
+  subtitleKey = "home.hero.subtitle",
 }: {
   eventStart: Date | null;
   locale: SupportedLocale;
+  subtitleAs?: "p" | "h1";
+  subtitleKey?: string;
 }) {
   const [now, setNow] = useState<Date>(() => new Date());
 
@@ -79,11 +83,15 @@ export default function Countdown({
 
   return (
     <div className="flex flex-col gap-4">
-      {showSubtitle ? (
-        <p className="font-display text-2xl font-bold leading-8 text-saa-page-fg">
-          {t("home.hero.subtitle", locale)}
-        </p>
-      ) : null}
+      {showSubtitle
+        ? createElement(
+            subtitleAs,
+            {
+              className: "font-display text-2xl font-bold leading-8 text-saa-page-fg",
+            },
+            t(subtitleKey, locale),
+          )
+        : null}
       <div className="flex flex-row items-center gap-10">
         {tiles.map((tile) => (
           <div
