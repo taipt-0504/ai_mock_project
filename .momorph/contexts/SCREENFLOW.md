@@ -1,10 +1,12 @@
 # SAA 2025 — Screen Flow
 
 **File Key**: `9ypp4enmFmdK3YAFJLIu6C`
-**Last updated**: 2026-05-06
-**Status**: Partial — only the Login screen has been surveyed in depth. Other entries are
-inferred from cross-references and MUST be re-confirmed when each owning screen is surveyed
-with `/momorph.screenflow`.
+**Last updated**: 2026-05-08
+**Status**: Partial — Login + Dropdown — Language + Homepage SAA + Dropdown — Profile (user)
++ Countdown - Prelaunch page surveyed in depth. Other entries are inferred from cross-references
+and MUST be re-confirmed when each owning screen is surveyed with `/momorph.screenflow`. The
+authoritative screen-flow document is `.momorph/SCREENFLOW.md`; this file is the lightweight
+index.
 
 ---
 
@@ -34,6 +36,7 @@ with `/momorph.screenflow`.
 | `54rekaCHG1` | Dropdown — Profile (admin) | (overlay on admin routes) | ⚠ pending | Contains "Logout" → Login (inferred). |
 | `T3e_iS9PCL` | Error page — 403 | `/403` (proposed) | ⚠ pending | "Back" → Login (inferred on auth failure). |
 | `8HGlvYGJWq` | [iOS] Login | (mobile variant) | ⚠ pending | Decide responsive single-route vs. separate route. |
+| `8PJQswPZmU` | Countdown - Prelaunch page | `/` (pre-event variant) or `/coming-soon` — TBD | ✅ 2026-05-08 | Standalone full-bleed countdown (no header/footer/nav). Reuses shipped `Countdown` + SAA root-art BG. No outgoing edges; logical handoff to Homepage SAA when countdown elapses. See `.momorph/SCREENFLOW.md` "Screen Details — Countdown - Prelaunch page". Open: Q-CP1 routing, Q-CP2 auth gating, Q-CP3 granularity, Q-CP4 i18n. |
 
 ---
 
@@ -85,3 +88,7 @@ Login (/login)
 - ⚠ Decide whether the mobile variant `[iOS] Login` (`8HGlvYGJWq`) is a separate route or a
   responsive breakpoint of `/login`. Default: responsive single route — escalate only if the
   iOS variant introduces interactions absent from the web frame.
+- ⚠ Resolve **Q-CP1..Q-CP4** for **Countdown - Prelaunch page** (`8PJQswPZmU`) before queuing
+  it for `/momorph.specify`: routing strategy (inline `/` variant vs. dedicated `/coming-soon`
+  path), anonymous-vs-authenticated gating, minute-vs-second granularity, and i18n behavior of
+  the `DAYS` / `HOURS` / `MINUTES` Latin labels.

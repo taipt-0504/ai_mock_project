@@ -5,7 +5,41 @@
 - **Figma File Key**: 9ypp4enmFmdK3YAFJLIu6C
 - **Figma URL**: https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C
 - **Created**: 2026-05-07
-- **Last Updated**: 2026-05-08 (Dropdown — Profile user variant `z4sCl3_Qtk` surveyed; spec written hồi tố do component đã ship cùng Homepage SAA Phase 13)
+- **Last Updated**: 2026-05-08 (Countdown - Prelaunch page `8PJQswPZmU` open-question batch resolved — env var finalized as `SAA_LAUNCH_AT`, route finalized as `/coming-soon`, whitelist finalized to exclude all Auth.js routes; spec ready for `momorph.plan`)
+
+> ### Global Pre-launch Gate — read this first
+>
+> While the prelaunch period is active (`now() < SAA_LAUNCH_AT`, a NEW env var
+> separate from `SAA_EVENT_START_AT`), Next.js `proxy.ts` redirects **every**
+> incoming request — including `/`, `/login`, `/awards`, `/sun-kudos`, `/general-rules`,
+> `/profile`, and every API route except a small whitelist — to the Countdown - Prelaunch
+> page (`/coming-soon`). Both anonymous AND authenticated users are routed to the
+> prelaunch screen during this window; sessions are NOT invalidated, they persist for
+> post-prelaunch use.
+>
+> **Implication for this document**: every "Incoming" / "Entry points" line in every
+> screen's section below has an implicit precondition `…AND now() >= SAA_LAUNCH_AT`.
+> Pre-prelaunch-end, none of those entry points fire — they all redirect to prelaunch.
+> Individual screen sections are NOT rewritten with this clause; treat it as a global
+> precondition stated here.
+>
+> When `now() >= SAA_LAUNCH_AT`:
+> 1. Visiting the prelaunch route itself redirects to `/` (route becomes unreachable).
+> 2. Homepage US0 takes over (anon → `/login`, authed → render Homepage SAA).
+> 3. All other routes resume normal behavior described in their sections below.
+>
+> **Whitelist (finalized, Q-PG4 resolved)** — NOT redirected during prelaunch:
+> Next.js internals (`/_next/*`), static assets (`/public/*`), favicon, the prelaunch
+> route itself (`/coming-soon`), and diagnostic endpoints (`/api/health` if/when added).
+> **NOT whitelisted (deliberately)**: every Auth.js route (`/api/auth/*` — including
+> `callback`, `csrf`, `session`, `signin`, `signout`). Rationale: `/login` is
+> unreachable during the gate, so OAuth init never happens; allowing the callback
+> open would create a probe surface during the gate window.
+>
+> **Missing-env behavior (Q-PG2 resolved)**: if `SAA_LAUNCH_AT` is unset, empty, or
+> unparseable, the proxy fails CLOSED in every `NODE_ENV` — the gate stays
+> active. Every environment (production, development, test, CI) MUST set
+> `SAA_LAUNCH_AT` explicitly; set it to a past ISO-8601 timestamp to disable the gate.
 
 > Companion file: `.momorph/contexts/SCREENFLOW.md` — keeps the in-depth navigation
 > graph + edge-confidence audit (per Constitution Principle III). This document is
@@ -17,11 +51,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Screens (known) | 7 |
+| Total Screens (known) | 8 |
 | Reusable Components (overlays) | 3 |
-| Surveyed in depth | 4 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user) |
+| Surveyed in depth | 5 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user, Countdown - Prelaunch page) |
 | Remaining | 3 |
-| Completion | ~57% |
+| Completion | ~63% |
 
 ---
 
@@ -33,6 +67,7 @@
 | 2 | Homepage SAA (auth-only) | `i87tDx10uM` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=i87tDx10uM | surveyed (2026-05-07) | `specs/i87tDx10uM-homepage-saa/spec.md` | `GET /api/notifications/unread-count` (predicted — bell badge); reuses `auth()` session for user fields; `SAA_EVENT_START_AT` env for countdown target. Awards = static config in this iteration. | Login (anon redirect via FR-001a); Awards Information (`/awards#<slug>`); Sun* Kudos detail (`/sun-kudos`); General Rules (`/general-rules`); Dropdown — Language; Dropdown — Profile (user/admin); Notification panel |
 | 3 | Error page — 403 | `T3e_iS9PCL` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=T3e_iS9PCL | pending | — | — | Login (inferred) |
 | 4 | [iOS] Login | `8HGlvYGJWq` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=8HGlvYGJWq | pending | — | (same as Login) | (same as Login) |
+| 5 | Countdown - Prelaunch page | `8PJQswPZmU` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=8PJQswPZmU | surveyed (2026-05-08, re-architected as **global pre-launch gate** same day; open questions Q-CP1..Q-CP5 + Q-PG1..Q-PG5 all resolved 2026-05-08 — route `/coming-soon`, env `SAA_LAUNCH_AT`) | — (no calls; countdown driven by NEW env var `SAA_LAUNCH_AT`, distinct from `SAA_EVENT_START_AT` which Homepage `B1` continues to use) | none in-screen — `now() >= SAA_LAUNCH_AT` lifts the proxy gate; all routes resume normal flow (anon → `/login` per Homepage US0, authed → Homepage SAA) |
 
 ### Reusable Components (Overlays — not routes)
 
@@ -128,6 +163,190 @@ Frame `z4sCl3_Qtk` is a tài liệu tham chiếu chống regression cho biến t
 
 ---
 
+## Screen Details — Countdown - Prelaunch page (`8PJQswPZmU`)
+
+**Type**: **Global pre-launch gate** — a dedicated full-bleed route (no header, no footer,
+no nav) that is rendered in place of every other route while the prelaunch window is active.
+Implementation vehicle is Next.js `proxy.ts`: it intercepts incoming requests and
+rewrites/redirects them to the prelaunch route as long as `now() < SAA_LAUNCH_AT`.
+This is no longer a `/` inline variant nor an optional surface — it is the universal entry
+point during the prelaunch window, regardless of session state.
+
+**Purpose**: Build anticipation for SAA 2025 with a minimal, immersive countdown while the
+program is still pre-launch. The screen reuses the SAA tree-roots key art (`MM_MEDIA_BG
+Image` + dark `Cover` overlay) from the same brand system as Homepage SAA, but strips away
+every navigation surface so the only thing in view is the remaining time until the prelaunch
+period ends.
+
+**Architecture role (revised 2026-05-08; all open questions resolved 2026-05-08)**:
+- Anchored on a NEW env var **`SAA_LAUNCH_AT`** (Q-PG1 resolved — terser and
+  marketing-friendly; chosen by user over earlier-discussed verbose alternatives such
+  as `SAA_PRELAUNCH_UNTIL` / `SAA_GATE_END_AT`), distinct from `SAA_EVENT_START_AT`.
+  The two can be set
+  independently. Logically `SAA_LAUNCH_AT <= SAA_EVENT_START_AT`, but this is NOT
+  enforced in code.
+- The prelaunch countdown counts down to `SAA_LAUNCH_AT`. Homepage SAA's existing
+  `B1` countdown continues to count down to `SAA_EVENT_START_AT` (unchanged) — the two
+  countdowns are independent.
+- **Auth-agnostic during the gate**: anonymous AND authenticated users see the prelaunch
+  screen. Sessions are NOT invalidated; they persist so authenticated users land directly
+  on Homepage SAA once the gate lifts.
+- **Proxy redirect target**: every non-whitelisted incoming request is redirected to
+  the prelaunch route `/coming-soon` (Q-PG3 resolved). This includes `/`, `/login`,
+  `/awards`, `/sun-kudos`, `/general-rules`, `/profile`, and every API route — including
+  every Auth.js path `/api/auth/*`.
+- **Whitelist** (NOT redirected, Q-PG4 resolved): `/_next/*` (Next.js internals),
+  `/public/*` (static assets), favicon, the prelaunch route itself (`/coming-soon`),
+  and diagnostic endpoints (`/api/health` if/when added).
+- **NOT whitelisted (deliberately, Q-PG4 resolved)**: every Auth.js route under
+  `/api/auth/*` — including `callback`, `csrf`, `session`, `signin`, `signout`. All
+  of these redirect to `/coming-soon` like any other application route. Rationale:
+  `/login` is unreachable during the gate so OAuth init never happens; allowing the
+  callback open would create a probe surface during the gate window.
+- **Missing-env behavior (Q-PG2 resolved)**: if `SAA_LAUNCH_AT` is null, empty, or
+  unparseable, the proxy fails CLOSED in every `NODE_ENV` — the gate stays active
+  and serves `/coming-soon` with `--/--/--` placeholders. Every environment MUST set
+  `SAA_LAUNCH_AT` explicitly; set it to a past ISO-8601 timestamp to disable the gate.
+- **Post-prelaunch handoff** (when `now() >= SAA_LAUNCH_AT`, Q-PG5 resolved):
+  1. Direct visits to `/coming-soon` always redirect to `/` (single redirect target;
+     route unreachable post-gate). Homepage US0 owns the anon-vs-authed branching, so
+     this layer does not duplicate it.
+  2. Homepage US0 takes over (`/` for anon → `/login`; `/` for authed → render Homepage).
+  3. All other routes resume normal behavior described in their sections.
+
+**Top-level structure** (from Figma frame `2268:35127`, 1512×900):
+
+| Section | Frame ID | Notes |
+|---------|----------|-------|
+| `MM_MEDIA_BG Image` | `2268:35129` | Full-bleed root-system illustration (same asset family as Homepage SAA hero `3.5`). |
+| `Cover` | `2268:35130` | Dark gradient overlay on top of the BG image to keep the countdown legible. |
+| `Bìa` (Cover container) | `2268:35131` | Centered flex column, `gap:120px`, `padding:96px 144px`. Holds the entire visible content stack. |
+| `Frame 487` → `Frame 523` → `Countdown time` | `2268:35132` / `2268:35135` / `2268:35136` | Nested centered column wrapping the heading + time tiles. |
+| Heading text | `2268:35137` | "Sự kiện sẽ bắt đầu sau" — Montserrat 700, 36px, white. Vietnamese only in this frame. |
+| `Time` row | `2268:35138` | Horizontal flex row with three units: `1_Days` (`2268:35139`), `2_Hours` (`2268:35144`), `3_Minutes` (`2268:35149`). `gap:60px`. |
+| Per-unit tile pair | `2268:35140` (Days), parallel for Hours/Minutes | Each unit is two side-by-side digit tiles (`Group 5`/`Group 4`, instances of component `186:2619`) — 77×123, glass-blur background (`backdrop-filter: blur(24.96px)`, semi-white linear gradient, 0.75px `#FFEA9E` border, 12px radius), digit rendered in `Digital Numbers` font at 73.7px. |
+| Per-unit label | e.g. `DAYS` (`2268:35143`) | Montserrat 700, 36px, uppercase Latin label below the two digit tiles. Same treatment for `HOURS` and `MINUTES`. |
+
+**Behavior**:
+- Auto-tick at minute granularity (visually consistent with Homepage SAA `B1` — but data
+  source differs: prelaunch reads `SAA_LAUNCH_AT`, Homepage `B1` reads
+  `SAA_EVENT_START_AT`). No seconds tile in this frame. Granularity is **minute-only
+  forever** (Q-CP3 resolved — matches Figma + Homepage `B1`; lower jitter / battery /
+  test surface; no second-level final-hour surge).
+- When `now() >= SAA_LAUNCH_AT`: proxy stops redirecting, and the prelaunch
+  route itself becomes unreachable (any direct visit is redirected to `/`). Mechanism:
+  proxy short-circuit on the time check; no client-side polling for handoff is
+  required because the gate is enforced server-side on every request.
+- No interactive controls. No header (no language chip, no profile, no notification bell).
+  No footer. No navigation. No call-to-action button.
+- Auth-agnostic: anonymous and authenticated visitors see the same screen; the rendering
+  pipeline does not call `auth()` and does not branch on session state. Session cookies are
+  preserved untouched.
+
+**Outgoing navigation edges**: **none** in-screen. The only "edge" is logical/temporal —
+the proxy lifts the gate once `now() >= SAA_LAUNCH_AT`, after which the next
+request to `/` follows Homepage US0 (anon → `/login`; authed → Homepage SAA).
+
+**Incoming edges** (during prelaunch window):
+- Direct visit to `/coming-soon` — naturally allowed.
+- **Redirected from every other route** via Next.js `proxy.ts`: `/`, `/login`,
+  `/awards`, `/sun-kudos`, `/general-rules`, `/profile`, and every API route except the
+  finalized whitelist (Next.js internals `/_next/*`, static assets `/public/*`, favicon,
+  the prelaunch route itself `/coming-soon`, and `/api/health` if/when added). All
+  Auth.js paths (`/api/auth/*` — `callback`, `csrf`, `session`, `signin`, `signout`)
+  are deliberately NOT whitelisted (Q-PG4 resolved) and redirect to `/coming-soon`.
+- Both anonymous AND authenticated users hit this route during the prelaunch window.
+
+**Incoming edges** (post-prelaunch, i.e. `now() >= SAA_LAUNCH_AT`):
+- None — visiting the prelaunch route redirects to `/` and the gate is no longer applied
+  to any other route.
+
+**Predicted APIs**:
+- **None.** Countdown reads the env-derived `SAA_LAUNCH_AT` value, parsed by an
+  event-config module sibling of [src/lib/event/event-config.ts](src/lib/event/event-config.ts)
+  (or extended to expose both datetimes). No `GET /api/event/config` call anticipated; the
+  proxy reads the env var on each request (or once at module load — implementation
+  detail for the spec/plan phase).
+
+**Reused / shared components** (do NOT rebuild):
+- `Countdown` ([src/components/home/Countdown.tsx](src/components/home/Countdown.tsx)) — already shipped for Homepage SAA Phase 13. The Days/Hours/Minutes tile shape, digital-numerals font, glass-blur surface, and `#FFEA9E` border are visually identical between the two frames; the prelaunch page is a stripped-down wrapper that omits the surrounding `B1` "Coming soon" copy and event-info block. Plan should parameterize / reuse the existing component, not fork. **Q-CP5 resolved** → extend the component with an optional prop `subtitleAs?: "p" | "h1"` (default `"p"`); the prelaunch route mounts `<Countdown subtitleAs="h1" subtitleKey="prelaunch.heading" />` while Homepage continues to render its existing `<p>` variant unchanged. Unit labels (DAYS/HOURS/MINUTES) inherit the existing `home.hero.countdown.{days,hours,minutes}` keys — no change.
+- `MM_MEDIA_BG Image` + dark cover overlay — reuses the same key-art asset family as Homepage SAA hero (`3.5` keyvisual). Treat as a shared media token.
+- Locale: heading text is rendered via a **NEW dedicated i18n key `prelaunch.heading`** (Q-CP4 resolved — NOT reusing Homepage's `home.hero.subtitle`; conflating the gate-lift moment with the ceremony-start moment was rejected). Both `vi-VN` and `en-US` catalogs MUST be updated in lockstep — the parity test (`tests/unit/lib/i18n/parity.test.ts`) enforces this. Translation helper (`src/lib/i18n/index.ts`) is reused unchanged.
+
+**New components to build** (Q-PG3 resolved — finalized targets, plan-phase ready):
+- `PrelaunchPage` (route component) at **`app/coming-soon/page.tsx`** — full-bleed
+  background + centered `Countdown` reuse. Thin Server Component that renders existing
+  primitives; mounts `<Countdown subtitleAs="h1" subtitleKey="prelaunch.heading" />`.
+  Reads `SAA_LAUNCH_AT` via the typed `config` module. Auth-agnostic — does NOT call
+  `auth()`.
+- `proxy.ts` (project root) — Next.js 16 `proxy` (renamed from `middleware` in Next.js 16; runs on the Node.js runtime — Edge is NOT supported in `proxy`) implementing the global gate.
+  On every request: (a) short-circuit if path is in whitelist (`/_next/*`, `/public/*`,
+  favicon, `/coming-soon`, `/api/health` if added); (b) compare `now()` to
+  `SAA_LAUNCH_AT`; (c) if before (or env null/malformed — fail closed per Q-PG2),
+  redirect non-whitelisted requests to `/coming-soon`; (d) if at `/coming-soon`
+  post-gate, redirect to `/`.
+- Env-config helper — add `SAA_LAUNCH_AT` to the Zod schema in
+  [src/lib/config.ts](src/lib/config.ts) (sibling of the existing `SAA_EVENT_START_AT`)
+  and expose it via `config.SAA_LAUNCH_AT`. No direct `process.env` reads outside this
+  module.
+
+**Open questions for spec/plan phase** — **all RESOLVED 2026-05-08** (see spec
+[`specs/8PJQswPZmU-countdown-prelaunch-page/spec.md`](specs/8PJQswPZmU-countdown-prelaunch-page/spec.md)
+§ Resolved Decisions for full traceability and FR/TR anchors):
+
+*Resolved by 2026-05-08 architectural revision:*
+- **Q-CP1** (routing — inline `/` variant vs. dedicated path): **RESOLVED** — dedicated
+  prelaunch route under a global proxy-driven gate. Path finalized to `/coming-soon`
+  (see Q-PG3).
+- **Q-CP2** (auth gating — pre-auth or behind Auth.js): **RESOLVED** — auth-agnostic
+  during the gate. Both anonymous and authenticated users see the prelaunch screen;
+  sessions persist; no `auth()` call in the prelaunch render path.
+
+*Resolved 2026-05-08 alongside the gate-architecture batch:*
+- **Q-CP3** Granularity: **RESOLVED** → **minute-only forever**. No seconds tile.
+  Matches Figma + Homepage `B1`. No second-level final-hour surge; lower jitter /
+  battery / test surface.
+- **Q-CP4** i18n: **RESOLVED** → **dedicated i18n key `prelaunch.heading`** (NOT
+  reusing Homepage's `home.hero.subtitle`). Both `vi-VN` and `en-US` catalogs MUST be
+  updated in lockstep — the parity test enforces it. Unit labels (DAYS / HOURS /
+  MINUTES) inherit the existing `Countdown` component's
+  `home.hero.countdown.{days,hours,minutes}` keys — no new label keys. Locale source
+  remains the `saa_locale` cookie (defaults to `vi-VN` if absent); no locale chip on
+  the prelaunch screen.
+- **Q-CP5** Heading element: **RESOLVED** → **extend the existing `Countdown`
+  component with an optional prop `subtitleAs?: "p" | "h1"` (default `"p"`)**. The
+  prelaunch route mounts `<Countdown subtitleAs="h1" subtitleKey="prelaunch.heading" />`;
+  Homepage continues to render `<p>` (no behavior change). Adds one Vitest case for
+  the new prop.
+
+*Gate-architecture questions (Q-PG = Pre-launch Gate) — all RESOLVED 2026-05-08:*
+- **Q-PG1** Env var name: **RESOLVED** → **`SAA_LAUNCH_AT`** (chosen by user —
+  terser and marketing-friendly — over earlier-discussed verbose alternatives such
+  as `SAA_PRELAUNCH_UNTIL` / `SAA_GATE_END_AT`).
+  Added to the Zod schema in [`src/lib/config.ts`](src/lib/config.ts) and exposed via
+  `config.SAA_LAUNCH_AT`.
+- **Q-PG2** Missing-env behavior: **RESOLVED** → **always fail closed**, regardless
+  of `NODE_ENV`. Null / empty / malformed env keeps the gate active and serves
+  `/coming-soon` with `--/--/--` placeholders. Trade-off: every environment
+  (production, development, test, CI) MUST set `SAA_LAUNCH_AT` explicitly — set to a
+  past ISO-8601 timestamp to disable the gate, future to activate it. `.env.example`,
+  the dev onboarding doc, and CI workflow files MUST be updated.
+- **Q-PG3** Route path: **RESOLVED** → **`/coming-soon`**. New file at
+  `app/coming-soon/page.tsx`.
+- **Q-PG4** Whitelist details: **RESOLVED** → **Whitelisted**: `/coming-soon` itself,
+  `/_next/*`, `/public/*`, favicon, `/api/health` (if/when added). **NOT
+  whitelisted**: every Auth.js route under `/api/auth/*` — including `callback`,
+  `csrf`, `session`, `signin`, `signout`. All redirect to `/coming-soon` like any
+  other application route. Rationale — `/login` is unreachable during the gate so
+  OAuth init never happens; allowing the callback open would create a probe surface
+  during the gate window.
+- **Q-PG5** Post-gate redirect target: **RESOLVED** → **always redirect
+  `/coming-soon` → `/`**. Homepage US0 then handles anon → `/login` and authed →
+  render Homepage. Single redirect target, no duplicated branching logic in the
+  prelaunch layer; the one-extra-hop cost for anon is accepted.
+
+---
+
 ## Screen Details — Homepage SAA (`i87tDx10uM`)
 
 **Type**: Authenticated-only route (post-login landing page). Anonymous requests to `/` are redirected to `/login` per spec FR-001a (US0). The chain is symmetrical with Login spec US2 (authed → `/`).
@@ -211,12 +430,20 @@ the Sun* Kudos campaign. Acts as the primary navigation hub once the user is aut
 
 ```mermaid
 flowchart TD
-    subgraph Auth["Authentication Flow"]
+    subgraph Gate["Prelaunch period (now() < SAA_LAUNCH_AT) — proxy.ts redirects ALL non-whitelisted requests to /coming-soon"]
+        AnyReq{"Any incoming request<br/>(/, /login, /awards, /sun-kudos,<br/>/general-rules, /profile, /api/*)"}
+        Whitelist[/"Whitelist (Q-PG4 resolved):<br/>/_next/*, /public/*,<br/>/coming-soon, favicon,<br/>/api/health (if added)"/]
+        Prelaunch["Countdown - Prelaunch<br/>8PJQswPZmU<br/>(/coming-soon, global gate)"]
+        AnyReq -->|in whitelist| Whitelist
+        AnyReq -->|NOT whitelisted, gate active<br/>anon AND authed<br/>(includes /api/auth/* — see note)| Prelaunch
+    end
+
+    subgraph Auth["Authentication Flow (post-gate)"]
         Login["Login (/login)<br/>GzbNeVGJHz"]
         LoginIOS["[iOS] Login<br/>8HGlvYGJWq"]
     end
 
-    subgraph Main["Main Application"]
+    subgraph Main["Main Application (post-gate)"]
         Home["Homepage SAA<br/>i87tDx10uM"]
         Awards["Awards Information<br/>(stub 2026-05-08)"]
         Kudos["Sun* Kudos<br/>(stub 2026-05-08)"]
@@ -237,6 +464,7 @@ flowchart TD
 
     Google[(Google OAuth)]
 
+    %% --- Post-gate flows: only fire when now() >= SAA_LAUNCH_AT ---
     Login -->|LOGIN With Google| Google
     Google -->|callback success| Home
     Google -->|deny / error| Login
@@ -257,11 +485,25 @@ flowchart TD
     E403    -->|Back| Login
 
     Login -->|already authenticated| Home
-    Home  -->|anon visitor (FR-001a)| Login
+    Home  -->|anon visitor (FR-001a / US0)| Login
+
+    %% --- Gate lift: post-prelaunch handoff ---
+    Prelaunch -->|"now() >= SAA_LAUNCH_AT<br/>visit prelaunch → redirect to /"| Home
+    Prelaunch -.->|"gate lifts → next request to /<br/>follows Homepage US0 (anon → /login)"| Login
 ```
 
-> Dotted edges = overlay open/close (no navigation).
-> Solid edges between routes = real navigation.
+> Dotted edges = overlay open/close OR conditional redirect (no in-screen interaction).
+> Solid edges between routes = real navigation / proxy redirect.
+> **Global precondition for every Auth/Main/Errors edge above**: `now() >= SAA_LAUNCH_AT`.
+> Pre-prelaunch-end, all of those edges are short-circuited by the proxy and rerouted
+> to Prelaunch (see the `Gate` cluster).
+>
+> **Footnote on the Gate whitelist (Q-PG4 resolved)**: every Auth.js route under
+> `/api/auth/*` — including `callback`, `csrf`, `session`, `signin`, `signout` — is
+> deliberately **NOT** whitelisted. They redirect to `/coming-soon` like any other
+> application route. Rationale: `/login` is unreachable during the gate, so OAuth init
+> never happens; whitelisting the callback would create a probe surface during the gate
+> window.
 
 ---
 
@@ -276,6 +518,7 @@ flowchart TD
 ### Group: Main Application
 | Screen | Purpose | Entry Points |
 |--------|---------|--------------|
+| Countdown - Prelaunch page (`8PJQswPZmU`, route **`/coming-soon`** — Q-PG3 resolved) | **Global pre-launch gate.** Standalone full-bleed prelaunch screen (BG art + Days/Hours/Minutes countdown counting down to `SAA_LAUNCH_AT`). While the gate is active, every non-whitelisted route in the app redirects to `/coming-soon` via Next.js `proxy.ts`. Auth-agnostic: anon and authed users both land here, sessions persist. Missing-env behavior: always fail closed (Q-PG2). | (1) Direct visit to `/coming-soon`. (2) **Proxy redirect from every other route** during the prelaunch window — `/`, `/login`, `/awards`, `/sun-kudos`, `/general-rules`, `/profile`, and every API route except the finalized whitelist (`/_next/*`, `/public/*`, favicon, `/coming-soon`, `/api/health` if/when added). All Auth.js paths `/api/auth/*` are deliberately NOT whitelisted (Q-PG4 resolved) and redirect to `/coming-soon`. |
 | Homepage SAA (`i87tDx10uM`) | Post-auth landing — hero / countdown / award catalog / Sun* Kudos promo / footer | Login success, direct visit while authenticated, Logo / `About SAA 2025` link from any other page |
 | Awards Information (stub 2026-05-08) | Per-award detail content; deep-links to `#<award-slug>`. Stub at [app/awards/page.tsx](app/awards/page.tsx) — placeholder pending real implementation. | Header `Awards Information`, footer link, `ABOUT AWARDS` CTA, any award card on Homepage |
 | Sun* Kudos (stub 2026-05-08) | Sun* Kudos campaign detail. Stub at [app/sun-kudos/page.tsx](app/sun-kudos/page.tsx) — placeholder pending real implementation. | Header `Sun* Kudos`, footer link, `ABOUT KUDOS` CTA, Sun* Kudos block `Chi tiết` |
@@ -316,7 +559,7 @@ flowchart TD
 
 ### Authentication Flow
 - Auth.js (NextAuth) — Google provider only.
-- Session check via `auth()` helper in Server Components / middleware; authenticated visitors
+- Session check via `auth()` helper in Server Components / proxy; authenticated visitors
   to `/login` are redirected before any markup is sent.
 
 ### Locale Handling (Dropdown — Language)
@@ -328,6 +571,15 @@ flowchart TD
 
 ### Routing
 - Next.js App Router. Protected routes require an authenticated session.
+- **Pre-launch gate** (added 2026-05-08): Next.js `proxy.ts` enforces a global
+  redirect-to-prelaunch policy while `now() < SAA_LAUNCH_AT`. The gate is
+  auth-agnostic and applies to every route except the whitelist (Next.js internals,
+  static assets, the prelaunch route itself, diagnostic endpoints). Once `now() >=
+  SAA_LAUNCH_AT`, the proxy short-circuits and all routes resume normal
+  behavior; visiting the prelaunch route post-gate redirects to `/`. The gate's anchor
+  env var `SAA_LAUNCH_AT` is independent of `SAA_EVENT_START_AT` — they can be set
+  separately. See "Screen Details — Countdown - Prelaunch page" for full architecture and
+  open questions Q-PG1..Q-PG5.
 
 ---
 
@@ -344,6 +596,9 @@ flowchart TD
 | 2026-05-08 | Component survey + retroactive spec | Dropdown — Profile user (`z4sCl3_Qtk`) | Mapped Figma frame `721:5223`: `A_Dropdown-List` (`666:9601`) chứa `A.1_Profile` (icon_text + user icon) và `A.2_Logout` (icon_text + chevron-right). Logout edge → `/login` confirmed (đã wired qua `<form action="/api/auth/signout" method="post">`, ship cùng Homepage Phase 13). Profile edge → `/profile` (TBD route — Q-DPU1). Spec viết hồi tố ở [specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md) để khoá hành vi (US1 mở/đóng, US2 navigate Profile, US3 signout, US4 dismiss, US5 keyboard/a11y), neo Node IDs, và làm điểm tham chiếu cho biến thể admin `54rekaCHG1` sẽ có spec riêng khi `User.role` migration unblock. Homepage spec không cần cập nhật — `A1.8` đã reference đúng overlay. Component file [src/components/home/ProfileButton.tsx](src/components/home/ProfileButton.tsx); 7 ca unit test xanh. Open questions: Q-DPU1 `/profile` 404 / stub / scope; Q-DPU2 thêm Escape handler; Q-DPU3 unblock admin variant. |
 | 2026-05-08 | Bug fix + stub routes | Homepage SAA (`i87tDx10uM`) + Dropdown — Profile (`z4sCl3_Qtk`) | **Hydration bug on back-from-404 fixed via stub pages.** User reported: clicking any nav/footer link from homepage navigates correctly, but on browser back the avatar / language / notification-bell click handlers no longer respond. Root cause: in Next.js 16 + Turbopack dev, when user clicks `<Link>` to a non-existent route, Next.js renders 404; clicking back fails to re-attach React to the homepage DOM (verified: `<main>` loses `__reactFiber`/`__reactProps`, avatar button loses `__reactProps.onClick`; click events still bubble to `document` but React event delegation is dead). Custom `app/not-found.tsx` was tried first and verified NOT to fix it (only changes the 404 UI, doesn't restore hydration). Fix: stub pages for the 4 missing destinations referenced from homepage — [app/awards/page.tsx](app/awards/page.tsx), [app/sun-kudos/page.tsx](app/sun-kudos/page.tsx), [app/general-rules/page.tsx](app/general-rules/page.tsx), [app/profile/page.tsx](app/profile/page.tsx) — each authed-gated and rendering shared [src/components/ui/StubPage.tsx](src/components/ui/StubPage.tsx) (title + "Trang đang được xây dựng" + Link back to `/`). Eliminates the 404 trigger so back navigation no longer corrupts hydration. Verified via Playwright headless across all 4 routes: avatar/language/bell click all work after back. **This is a workaround**, not a Next.js fix — the underlying bug should be reported upstream with minimal repro. Spec sync: dropdown-profile/spec.md Q1 reversed (404 → stub) and Q6 added documenting full diagnosis; SCREENFLOW Main Application screens table + Mermaid graph + Q-DPU1 + Next Steps backlog all flipped from `(TBD)` → `(stub 2026-05-08)`. Lint + tsc clean. |
 | 2026-05-08 | Bug fix + spec sync | Dropdown — Profile user (`z4sCl3_Qtk`) | **Signout pattern migrated to Server Action.** User reported click "Đăng xuất" → 302 redirect tới `/api/auth/signin?error=MissingCSRF` instead of `/login`. Root cause: shipped raw `<form action="/api/auth/signout" method="post">` (NextAuth v4 pattern) but project uses Auth.js v5, which requires CSRF token in body for the catch-all `/api/auth/signout` POST. Fix: created [src/actions/auth.ts](src/actions/auth.ts) with `"use server"` exporting `signOutAction()` that calls `signOut({ redirectTo: "/login" })`; ProfileButton now uses `<form action={signOutAction}>`. Next.js Server Action token handles CSRF; Auth.js deletes Session row + clears cookie + redirects. Verified end-to-end via Playwright headless with real session cookie: final URL `/login`, session row deleted. Unit test updated (mock the action to keep jsdom env from loading NextAuth). spec.md hygiene: FR-005 / TR-007 / Security CSRF / API table / Implementation Status / acceptance scenarios all synced; Q5 added to Resolved Questions. SCREENFLOW behavior bullet (line 103) updated; raw `/api/auth/signout` form action now flagged forbidden. |
+| 2026-05-08 | Screen survey (flow only) | Countdown - Prelaunch page (`8PJQswPZmU`) | Mapped Figma frame `2268:35127` (1512×900). Structure: full-bleed `MM_MEDIA_BG Image` (`2268:35129`) + dark `Cover` overlay (`2268:35130`) + centered `Bìa` container (`2268:35131`) holding heading "Sự kiện sẽ bắt đầu sau" (`2268:35137`, Montserrat 700/36px) and a `Time` row (`2268:35138`) of three units: `1_Days` / `2_Hours` / `3_Minutes` (each = two glass-blur digit tiles, instances of component `186:2619`, with `Digital Numbers` 73.7px digits and a `DAYS` / `HOURS` / `MINUTES` Latin label below). No header, footer, nav, or interactive controls; no outgoing edges; the only edge is the logical "countdown elapsed → Homepage SAA" handoff. Predicted APIs: **none** — same env-driven datetime as Homepage `B1` (`SAA_EVENT_START_AT` via [src/lib/event/event-config.ts](src/lib/event/event-config.ts)). Reuses shipped `Countdown` component ([src/components/home/Countdown.tsx](src/components/home/Countdown.tsx)) and the SAA root-art BG asset family. Open questions Q-CP1..Q-CP4 logged (routing — inline `/` variant vs. dedicated path; auth gating; minute vs. seconds granularity; i18n of labels). No spec/plan written per skill instruction "do not create a feature spec — only update SCREENFLOW.md". |
+| 2026-05-08 | **Prelaunch spec — open questions resolved** | Countdown - Prelaunch page (`8PJQswPZmU`) | All eight pending open questions on the prelaunch spec resolved in one pass — Q-CP1..Q-CP5 (countdown / page) and Q-PG1..Q-PG5 (gate). Headline choices: env var = **`SAA_LAUNCH_AT`** (Q-PG1, terser/marketing-friendly than verbose earlier-discussed alternatives); missing-env behavior = **always fail closed** in every `NODE_ENV` (Q-PG2 — every environment MUST set the env explicitly, past timestamp = gate disabled, future = active); route path = **`/coming-soon`** (Q-PG3, new file `app/coming-soon/page.tsx`); whitelist (Q-PG4) = `/_next/*`, `/public/*`, favicon, `/coming-soon`, `/api/health` if/when added — **all Auth.js routes `/api/auth/*` (`callback`, `csrf`, `session`, `signin`, `signout`) are deliberately NOT whitelisted**, they redirect to `/coming-soon` like any other route; post-gate redirect = always `/coming-soon` → `/` (Q-PG5, Homepage US0 owns anon-vs-authed branching); granularity = minute-only forever (Q-CP3, no seconds tile); i18n = NEW dedicated key `prelaunch.heading` updated in lockstep across `vi-VN` and `en-US` catalogs, parity test enforces (Q-CP4 — NOT reusing `home.hero.subtitle`); heading element = extend existing `Countdown` component with optional `subtitleAs?: "p" \| "h1"` prop (default `"p"`), prelaunch route mounts `<Countdown subtitleAs="h1" subtitleKey="prelaunch.heading" />` (Q-CP5). Spec status: **Ready for `momorph.plan`** ([specs/8PJQswPZmU-countdown-prelaunch-page/spec.md](specs/8PJQswPZmU-countdown-prelaunch-page/spec.md) § Resolved Decisions has the full FR/TR anchor matrix). No code shipped this entry; SCREENFLOW.md synced — no other screen sections touched. |
+| 2026-05-08 | **Architecture revision — global pre-launch gate** | Countdown - Prelaunch page (`8PJQswPZmU`) + cross-screen | Prelaunch's role fundamentally revised: no longer a `/` inline variant or optional surface — it is now a **global pre-launch gate** enforced by Next.js `proxy.ts`. While `now() < SAA_LAUNCH_AT` (NEW env var, distinct from `SAA_EVENT_START_AT`), every non-whitelisted route (`/`, `/login`, `/awards`, `/sun-kudos`, `/general-rules`, `/profile`, every API route) redirects to the prelaunch screen. Whitelist: `/_next/*`, `/public/*`, prelaunch route itself, diagnostic endpoints (e.g. `/api/health` if present); OAuth callback path handling pending Q-PG4. Auth-agnostic during gate: anon AND authed users land on prelaunch; sessions are NOT invalidated. Post-prelaunch handoff: visiting prelaunch route redirects to `/`; Homepage US0 takes over (anon → `/login`, authed → render Homepage); other routes resume normal behavior. Two countdowns now exist independently: Homepage `B1` continues to count down to `SAA_EVENT_START_AT`; prelaunch counts down to `SAA_LAUNCH_AT`. Logically `SAA_LAUNCH_AT <= SAA_EVENT_START_AT` but not enforced in code. **Q-CP1 RESOLVED** (dedicated path under global gate); **Q-CP2 RESOLVED** (auth-agnostic). Q-CP3 (granularity) and Q-CP4 (i18n) remain open. **NEW open questions** for the gate architecture: Q-PG1 final env var name, Q-PG2 missing-env behavior (gate-disabled vs. fail-closed; recommend env-aware), Q-PG3 final route path (`/prelaunch` vs `/coming-soon` vs other), Q-PG4 OAuth callback + health endpoint whitelist details, Q-PG5 post-prelaunch redirect target (always `/` vs. honor auth → `/login` directly). Mermaid graph rewritten to add a `Gate` cluster visualizing the universal-entry-point semantics. Cross-screen note added at the top of this document and at the Mermaid graph: every other screen's "Incoming"/"Entry points" line carries an implicit precondition `…AND now() >= SAA_LAUNCH_AT`. Individual screen sections (Login, Homepage SAA, Awards, Sun* Kudos, Profile, dropdowns) are NOT individually rewritten — the global note covers them. Spec rewrite for prelaunch (`specs/8PJQswPZmU-countdown-prelaunch-page/spec.md`) is the next workflow step and was deliberately deferred from this revision. |
 | 2026-05-07 | UI implementation | Homepage SAA (`i87tDx10uM`) | Phases 1–13 of [tasks.md](specs/i87tDx10uM-homepage-saa/tasks.md) shipped. Reused existing `Header` (extended with `nav` / `notification` / `profileMenu` / `logoHref` slots — slim variant unchanged for Login regression), `LanguageSelector`, `Logo` (now accepts optional `href`), `auth()`, `getSaaLocale()`. New components under [src/components/home/](src/components/home/): `Hero`, `Countdown`, `EventInfo`, `CTAButtons`, `RootFurtherEssay`, `AwardsSectionHeader`, `AwardCard`, `AwardsGrid`, `KudosBlock`, `NavLinks`, `Footer`, `WidgetButton`, `NotificationBell`, `ProfileButton`. New primitives under [src/components/ui/](src/components/ui/): `toast.ts` + `Toaster.tsx` (in-house, mounted in [app/layout.tsx](app/layout.tsx)). New backend: `app/api/notifications/unread-count/route.ts` → `notification-service` → `notification-repository` (v1 stub `0`). Static config at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) (six entries with stable slugs), env parser at [src/lib/event/event-config.ts](src/lib/event/event-config.ts). Tailwind tokens added: `saa-card-surface/border`, `saa-essay-quote-fg`, `saa-fab-bg/fg`, `saa-footer-bg/fg`, `saa-notification-dot`. ~36 i18n keys added to both vi-VN / en-US in lockstep — parity test green. PQ1 = b: `User.role` deferred; ProfileButton ships with the user-only menu (Profile + Sign out via `<form action="/api/auth/signout" method="post">`). `i18n/index.ts` no longer imports the server-only logger so client islands (`NotificationBell`, `WidgetButton`, `ProfileButton`, `Toaster`) can call `t()` without bundler errors. Build / typecheck / lint all clean. |
 
 ---
@@ -353,6 +608,10 @@ flowchart TD
 - [x] Survey Homepage SAA (`i87tDx10uM`) — header reuse (`Header` + `LanguageSelector`) confirmed; outgoing edges to Awards Information / Sun* Kudos / Tiêu chuẩn chung / Profile dropdowns / Notification panel / Quick-actions FAB recorded.
 - [ ] Run `momorph.specify` for Homepage SAA to resolve open questions Q-H1..Q-H4 (event datetime source, awards data source, notification panel scope, profile-menu role routing).
 - [x] Survey Profile dropdown user variant (`z4sCl3_Qtk`) — Logout → `/login` edge confirmed (`POST /api/auth/signout`); spec hồi tố ([specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md)).
+- [x] Survey Countdown - Prelaunch page (`8PJQswPZmU`) — flow-only survey; no spec written (per skill instruction). Open questions Q-CP1..Q-CP4 logged. Resolve before adding to `momorph.specify` queue.
+- [x] **Re-architect Countdown - Prelaunch as global pre-launch gate (2026-05-08)**: Q-CP1 RESOLVED (dedicated path under proxy-driven gate); Q-CP2 RESOLVED (auth-agnostic). Q-CP3 / Q-CP4 still open. NEW open questions Q-PG1..Q-PG5 logged for the gate architecture (env var name, missing-env behavior, route path, OAuth/health whitelist, post-prelaunch redirect target).
+- [x] **Resolve Countdown - Prelaunch open questions (2026-05-08)** — all 8 questions (Q-CP1..Q-CP5 + Q-PG1..Q-PG5) closed: env = `SAA_LAUNCH_AT`, missing env = always fail closed, route = `/coming-soon`, OAuth NOT whitelisted, post-gate redirect = always `/`, granularity = minute-only, i18n = dedicated `prelaunch.heading` key, heading element via `Countdown.subtitleAs` prop. Spec ready for plan.
+- [ ] **Run `momorph.plan` for Countdown - Prelaunch page (`8PJQswPZmU`)** — spec is now resolved ([specs/8PJQswPZmU-countdown-prelaunch-page/spec.md](specs/8PJQswPZmU-countdown-prelaunch-page/spec.md) § Resolved Decisions, status "Ready for `momorph.plan`"). Plan should produce the proxy contract, env-config helper extension to `src/lib/config.ts`, the `/coming-soon` route at `app/coming-soon/page.tsx`, the new `prelaunch.heading` i18n key in both catalogs, the `Countdown.subtitleAs` prop extension, and the CI-matrix updates (gate-active and gate-disabled jobs) per TR-005.
 - [ ] Survey Profile dropdown admin variant (`54rekaCHG1`) — pending `User.role` schema migration (Homepage spec PQ1 = b). Sẽ kế thừa Profile + Sign out, thêm "Admin Dashboard".
 - [ ] Survey trang `/profile` (destination cho item `A.1` của dropdown profile user) — stub placeholder ship 2026-05-08 ([app/profile/page.tsx](app/profile/page.tsx)) làm tạm; spec/implementation thực vẫn pending. Q-DPU1 đảo từ "chấp nhận 404" → "stub" do hydration bug.
 - [ ] Survey Awards Information and Sun* Kudos detail pages once their frame IDs are added to the file index (deep-link target `#<award-slug>` is required for `C2.*` cards).
