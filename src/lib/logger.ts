@@ -41,7 +41,11 @@ function redact(value: unknown): unknown {
   return value;
 }
 
-function emit(level: "info" | "warn" | "error", event: string, payload?: unknown): void {
+function emit(
+  level: "debug" | "info" | "warn" | "error",
+  event: string,
+  payload?: unknown,
+): void {
   const requestId = requestContext.getStore()?.requestId ?? "(unset)";
   const safe = payload === undefined ? undefined : redact(payload);
   const line = JSON.stringify({
@@ -51,11 +55,18 @@ function emit(level: "info" | "warn" | "error", event: string, payload?: unknown
     ts: new Date().toISOString(),
     ...(safe ? { payload: safe } : {}),
   });
-   
-  (level === "error" ? console.error : level === "warn" ? console.warn : console.info)(line);
+
+  (level === "error"
+    ? console.error
+    : level === "warn"
+      ? console.warn
+      : level === "debug"
+        ? console.debug
+        : console.info)(line);
 }
 
 export const logger = {
+  debug: (event: string, payload?: unknown) => emit("debug", event, payload),
   info: (event: string, payload?: unknown) => emit("info", event, payload),
   warn: (event: string, payload?: unknown) => emit("warn", event, payload),
   error: (event: string, payload?: unknown) => emit("error", event, payload),

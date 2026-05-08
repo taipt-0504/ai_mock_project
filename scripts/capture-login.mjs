@@ -1,0 +1,10 @@
+import { chromium } from "@playwright/test";
+const OUT = "/home/phungthetai/projects/ai_projects/ai_mock_project/.momorph/specs/GzbNeVGJHz-login/assets/implementation.png";
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1512, height: 1077 } });
+const page = await ctx.newPage();
+await page.goto("http://localhost:3002/login", { waitUntil: "networkidle" });
+await page.waitForTimeout(800);
+await page.screenshot({ path: OUT, fullPage: true });
+console.log("saved", OUT);
+await browser.close();

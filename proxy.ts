@@ -1,23 +1,45 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { config as appConfig } from "@/src/lib/config";
+import { parseLaunchAt } from "@/src/lib/event/event-config";
+import { logger } from "@/src/lib/logger";
+import { evaluateGate } from "@/src/lib/proxy/prelaunch-gate";
+
 /**
- * Edge-runtime proxy for the Login surface (Next.js 16 convention; replaces
- * the legacy `middleware.ts` file. Same behavior, new file/function name.)
+ * Next.js 16 `proxy.ts` — runs on the **Node.js runtime** (Edge is not
+ * supported in Next.js 16 `proxy`; see the upgrade guide). Owns three
+ * concerns, in order:
  *
- *   1. Stamps every request with a UUID `x-request-id` so server-side log
- *      lines can be correlated. Downstream Server Components and route
- *      handlers can read the value via `headers().get('x-request-id')`.
- *   2. Adds the OWASP-recommended security headers to every response.
- *   3. Applies an in-memory token-bucket rate limit on the OAuth callback
+ *   1. **Prelaunch gate** (Prelaunch spec FR-006/FR-007/FR-008/FR-009).
+ *      Short-circuits with a 307 redirect to `/coming-soon` while
+ *      `SAA_LAUNCH_AT > now()` (or env is null/malformed — fail closed),
+ *      OR redirects `/coming-soon` → `/` once the gate has lifted.
+ *      Whitelisted infrastructure paths pass through unchanged.
+ *      Redirect responses STILL flow through `applySecurityHeaders` so the
+ *      OWASP header set attaches to 307s (TR-002 A05).
+ *
+ *   2. **Request correlation**: stamps every response with a UUID
+ *      `x-request-id` so server-side log lines can be correlated.
+ *
+ *   3. **Login pipeline** (existing): adds OWASP-recommended security
+ *      headers + an in-memory token-bucket rate limit on the OAuth callback
  *      endpoints (Login spec TR-007 + abuse mitigation A07).
  *
+ * The gate-active branch makes the rate limit on `/api/auth/callback`
+ * effectively unreachable during the prelaunch window because Auth.js paths
+ * are NOT whitelisted (Q-PG4) — acceptable; the rate limit serves
+ * post-gate-lift traffic.
+ *
  * NOTE on AsyncLocalStorage propagation: the logger module's ALS store
- * (`requestContext`) cannot be populated from this Edge-runtime proxy (it
- * imports `node:async_hooks`, which is unavailable on the Edge). Until a
- * per-route ALS bridge is wired up (Phase 7 follow-up), the logger falls
- * back to its `request_id="(unset)"` placeholder; the header carries the
- * correlation key in the meantime.
+ * (`requestContext`) cannot be populated from the proxy directly (it
+ * imports `node:async_hooks`). Until a per-route ALS bridge is wired up,
+ * the logger falls back to `request_id="(unset)"`; the `x-request-id`
+ * response header carries the correlation key in the meantime.
  */
+
+// why: parsed once at module load to keep the gate decision a pure compare
+// per request (TR-001 perf budget — ≤ 5ms p50 / ≤ 15ms p99 added to TTFB).
+const LAUNCH_AT: Date | null = parseLaunchAt(appConfig.SAA_LAUNCH_AT);
 
 const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   // Allow self + inline (Next.js injects inline runtime), data: images, and
@@ -71,6 +93,29 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 export function proxy(request: NextRequest): NextResponse {
   const requestId = crypto.randomUUID();
   const url = new URL(request.url);
+
+  const decision = evaluateGate(url.pathname, LAUNCH_AT, new Date());
+
+  if (decision.type === "redirect") {
+    logger.debug("prelaunch-gate", {
+      kind: "prelaunch-gate",
+      path: url.pathname,
+      decision: "redirect",
+      target: decision.target,
+    });
+    const redirect = NextResponse.redirect(
+      new URL(decision.target, request.url),
+      307,
+    );
+    redirect.headers.set("x-request-id", requestId);
+    return applySecurityHeaders(redirect);
+  }
+
+  logger.debug("prelaunch-gate", {
+    kind: "prelaunch-gate",
+    path: url.pathname,
+    decision: "passthrough",
+  });
 
   if (url.pathname.startsWith(RATE_LIMIT_PATH_PREFIX)) {
     const ip =
