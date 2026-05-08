@@ -5,7 +5,7 @@
 - **Figma File Key**: 9ypp4enmFmdK3YAFJLIu6C
 - **Figma URL**: https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C
 - **Created**: 2026-05-07
-- **Last Updated**: 2026-05-07 (Homepage SAA surveyed; access control flipped to authenticated-only — anon users redirected to `/login`)
+- **Last Updated**: 2026-05-08 (Dropdown — Profile user variant `z4sCl3_Qtk` surveyed; spec written hồi tố do component đã ship cùng Homepage SAA Phase 13)
 
 > Companion file: `.momorph/contexts/SCREENFLOW.md` — keeps the in-depth navigation
 > graph + edge-confidence audit (per Constitution Principle III). This document is
@@ -19,9 +19,9 @@
 |--------|-------|
 | Total Screens (known) | 7 |
 | Reusable Components (overlays) | 3 |
-| Surveyed in depth | 3 (Login, Dropdown — Language, Homepage SAA) |
-| Remaining | 4 |
-| Completion | ~43% |
+| Surveyed in depth | 4 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user) |
+| Remaining | 3 |
+| Completion | ~57% |
 
 ---
 
@@ -39,7 +39,7 @@
 | # | Component Name | Frame ID | Figma Link | Status | Used By | Navigations To |
 |---|----------------|----------|------------|--------|---------|----------------|
 | C1 | Dropdown — Language | `hUyaaugye2` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=hUyaaugye2 | surveyed (2026-05-07) | Login (`GzbNeVGJHz`), Homepage SAA (`i87tDx10uM`, confirmed via header item `A1.7`), other authenticated screens with the header | none — selection updates locale in place |
-| C2 | Dropdown — Profile (user) | `z4sCl3_Qtk` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=z4sCl3_Qtk | pending | authenticated user routes | Login (Logout — inferred) |
+| C2 | Dropdown — Profile (user) | `z4sCl3_Qtk` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=z4sCl3_Qtk | surveyed (2026-05-08) | Homepage SAA (`A1.8`); future authenticated user routes reusing the header | Profile route (`/profile` — TBD); Login (after Logout via `POST /api/auth/signout`) |
 | C3 | Dropdown — Profile (admin) | `54rekaCHG1` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=54rekaCHG1 | pending | admin routes | Login (Logout — inferred) |
 
 ---
@@ -76,6 +76,53 @@ display map live at [src/lib/i18n/types.ts](src/lib/i18n/types.ts); cookie helpe
 [src/lib/cookies/saa-locale.ts](src/lib/cookies/saa-locale.ts); API at
 [app/api/i18n/locale/route.ts](app/api/i18n/locale/route.ts). Frame `hUyaaugye2` is a
 visual refresh of this component, not a fresh build target.
+
+---
+
+## Component Details — `C2` Dropdown — Profile (user) (`z4sCl3_Qtk`)
+
+**Type**: Reusable overlay component (NOT a standalone screen — no URL of its own).
+
+**Anchor**: Profile avatar `A1.8` of the shared `Header`. Confirmed on Homepage SAA
+(`i87tDx10uM`); will mount on every authenticated user-role screen reusing the same header.
+Figma's `linkedFrameId: 721:5223` on `A1.8` references the legacy `Dropdown-profile` parent —
+`z4sCl3_Qtk` is its surveyed user variant. Admin variant `54rekaCHG1` (adds "Admin Dashboard")
+remains pending until `User.role` schema migration ships (Homepage spec PQ1 = b).
+
+**Structure** (from Figma frame `721:5223`):
+- `A_Dropdown-List` (`666:9601`, instance of component `563:7882`) — overlay container.
+  - `A.1_Profile` (`I666:9601;563:7844`) — icon_text button, user icon. Figma label "Profile";
+    runtime label from i18n key `home.profile.profile` ("Hồ sơ" / "Profile").
+  - `A.2_Logout` (`I666:9601;563:7868`) — icon_text button, chevron-right icon. Figma label
+    "Logout"; runtime label from i18n key `home.profile.sign_out` ("Đăng xuất" / "Sign out").
+
+**Behavior**:
+- Click avatar `A1.8` → opens overlay; click again or click outside / `Esc` → closes.
+- Click `A.1` Profile → Next.js `<Link href="/profile">` navigation. `/profile` route is TBD
+  (open question Q-DPU1 / spec Q1).
+- Click `A.2` Logout → `<form action={signOutAction}>` submit (Server Action defined at
+  `src/actions/auth.ts`) → Auth.js v5 `signOut({ redirectTo: "/login" })` invalidates session
+  and redirects to `/login` (mirror of Login spec US1; closes the authenticated state machine).
+  Raw `<form action="/api/auth/signout" method="post">` is **forbidden** — Auth.js v5 rejects
+  it with `MissingCSRF` (see `z4sCl3_Qtk-dropdown-profile/spec.md` Q5).
+- Trigger fallback chain: `session.user.image` → `name` initial → `?`. `aria-label` =
+  `name` (or "Hồ sơ" if missing).
+- No role branching in this component; admin variant lives in `54rekaCHG1`.
+
+**Edges**:
+- Outgoing: `/profile` (TBD destination), `/login` (after logout).
+- Incoming: avatar `A1.8` of every authenticated user route reusing the header.
+
+**Implementation status**: **Already shipped** with Homepage SAA Phase 13 (commit
+[893d8db](../../). Component file: [src/components/home/ProfileButton.tsx](src/components/home/ProfileButton.tsx).
+Mounted via `Header`'s `profileMenu` slot. Unit tests: [tests/unit/components/home/ProfileButton.test.tsx](tests/unit/components/home/ProfileButton.test.tsx)
+(7 ca, vitest xanh). Spec hồi tố: [specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md).
+Frame `z4sCl3_Qtk` is a tài liệu tham chiếu chống regression cho biến thể user, không phải build target mới.
+
+**Open questions** (chốt trong spec):
+- **Q-DPU1**: `/profile` route — milestone hiện tại có làm trang đích, hay chấp nhận 404 ngắn hạn? (Khuyến nghị: chấp nhận 404, đặt task survey `/profile`.)
+- **Q-DPU2**: Bổ sung `keydown` listener cho `Escape` để đóng overlay + trả focus về trigger (đồng bộ pattern với LanguageSelector). (Khuyến nghị: thêm.)
+- **Q-DPU3**: Logic chọn biến thể (user vs. admin) phụ thuộc vào `User.role` schema — khi nào unblock biến thể admin?
 
 ---
 
@@ -291,6 +338,8 @@ flowchart TD
 | 2026-05-07 | Chip flip (Q5) | Dropdown — Language (`hUyaaugye2`) | English chip flipped from `US` (🇺🇸) → `EN` (🇬🇧) to match Figma frame `hUyaaugye2`. `LOCALE_DISPLAY` updated; `flag-en.svg` added; `flag-us.svg` removed; tests + Login spec Q1 audit log + this doc all synced. Locale code `en-US` unchanged. |
 | 2026-05-07 | Screen survey | Homepage SAA (`i87tDx10uM`) | Mapped Figma frame `2167:9026`: header `A1` reuses shipped `Header` + `LanguageSelector` (locale chip `A1.7`); confirmed outgoing routes to Awards Information (`A1.3`, `B3.1` ABOUT AWARDS, footer `7.3`, six award cards `C2.1`–`C2.6` with `#<award-slug>` deep-links), Sun* Kudos (`A1.5`, `B3.2` ABOUT KUDOS, footer `7.4`, `D1`/`D2.1` Sun* Kudos block), Tiêu chuẩn chung (footer `7.5`). Overlays: `A1.7` → Dropdown — Language, `A1.8` → Dropdown — Profile (user `z4sCl3_Qtk` / admin `54rekaCHG1`; Figma legacy linkedFrameId `721:5223` noted), `A1.6` → Notification panel (TBD), `#6` FAB → quick-actions menu (TBD). Predicted APIs added: `GET /api/users/me`, `GET /api/event/config`, `GET /api/awards`, `GET /api/notifications`, `GET /api/kudos/summary`. New components anticipated: `Countdown`, `AwardCard`/`AwardGrid`, `CTAButton`, `NotificationBell`, `ProfileMenu`, `Footer`, `Logo`, `WidgetButton`. Mermaid graph extended with Awards / Sun* Kudos / Tiêu chuẩn chung route nodes and Notification / Quick-actions overlays. |
 | 2026-05-07 | Access-control flip | Homepage SAA (`i87tDx10uM`) | Homepage flipped from "open with conditional auth UI" → **authenticated-only**. Anonymous visitors are redirected to `/login` per spec FR-001a / US0; chain is symmetrical with Login spec US2. Spec Q3 (FAB visibility for anon) and Q5 (sign-in CTA on anon header) collapsed to "not applicable". FR-004 / FR-015 simplified to "always render" (no conditional anon variant). Mermaid graph adds `Home → Login` edge labeled "anon visitor (FR-001a)". Awards data confirmed static (Q2). Footer "Tiêu chuẩn chung" route locked to `/general-rules` (Q1). Header reuse confirmed: extend existing `Header` with optional slots, no fork (Q4). |
+| 2026-05-08 | Component survey + retroactive spec | Dropdown — Profile user (`z4sCl3_Qtk`) | Mapped Figma frame `721:5223`: `A_Dropdown-List` (`666:9601`) chứa `A.1_Profile` (icon_text + user icon) và `A.2_Logout` (icon_text + chevron-right). Logout edge → `/login` confirmed (đã wired qua `<form action="/api/auth/signout" method="post">`, ship cùng Homepage Phase 13). Profile edge → `/profile` (TBD route — Q-DPU1). Spec viết hồi tố ở [specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md) để khoá hành vi (US1 mở/đóng, US2 navigate Profile, US3 signout, US4 dismiss, US5 keyboard/a11y), neo Node IDs, và làm điểm tham chiếu cho biến thể admin `54rekaCHG1` sẽ có spec riêng khi `User.role` migration unblock. Homepage spec không cần cập nhật — `A1.8` đã reference đúng overlay. Component file [src/components/home/ProfileButton.tsx](src/components/home/ProfileButton.tsx); 7 ca unit test xanh. Open questions: Q-DPU1 `/profile` 404 / stub / scope; Q-DPU2 thêm Escape handler; Q-DPU3 unblock admin variant. |
+| 2026-05-08 | Bug fix + spec sync | Dropdown — Profile user (`z4sCl3_Qtk`) | **Signout pattern migrated to Server Action.** User reported click "Đăng xuất" → 302 redirect tới `/api/auth/signin?error=MissingCSRF` instead of `/login`. Root cause: shipped raw `<form action="/api/auth/signout" method="post">` (NextAuth v4 pattern) but project uses Auth.js v5, which requires CSRF token in body for the catch-all `/api/auth/signout` POST. Fix: created [src/actions/auth.ts](src/actions/auth.ts) with `"use server"` exporting `signOutAction()` that calls `signOut({ redirectTo: "/login" })`; ProfileButton now uses `<form action={signOutAction}>`. Next.js Server Action token handles CSRF; Auth.js deletes Session row + clears cookie + redirects. Verified end-to-end via Playwright headless with real session cookie: final URL `/login`, session row deleted. Unit test updated (mock the action to keep jsdom env from loading NextAuth). spec.md hygiene: FR-005 / TR-007 / Security CSRF / API table / Implementation Status / acceptance scenarios all synced; Q5 added to Resolved Questions. SCREENFLOW behavior bullet (line 103) updated; raw `/api/auth/signout` form action now flagged forbidden. |
 | 2026-05-07 | UI implementation | Homepage SAA (`i87tDx10uM`) | Phases 1–13 of [tasks.md](specs/i87tDx10uM-homepage-saa/tasks.md) shipped. Reused existing `Header` (extended with `nav` / `notification` / `profileMenu` / `logoHref` slots — slim variant unchanged for Login regression), `LanguageSelector`, `Logo` (now accepts optional `href`), `auth()`, `getSaaLocale()`. New components under [src/components/home/](src/components/home/): `Hero`, `Countdown`, `EventInfo`, `CTAButtons`, `RootFurtherEssay`, `AwardsSectionHeader`, `AwardCard`, `AwardsGrid`, `KudosBlock`, `NavLinks`, `Footer`, `WidgetButton`, `NotificationBell`, `ProfileButton`. New primitives under [src/components/ui/](src/components/ui/): `toast.ts` + `Toaster.tsx` (in-house, mounted in [app/layout.tsx](app/layout.tsx)). New backend: `app/api/notifications/unread-count/route.ts` → `notification-service` → `notification-repository` (v1 stub `0`). Static config at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) (six entries with stable slugs), env parser at [src/lib/event/event-config.ts](src/lib/event/event-config.ts). Tailwind tokens added: `saa-card-surface/border`, `saa-essay-quote-fg`, `saa-fab-bg/fg`, `saa-footer-bg/fg`, `saa-notification-dot`. ~36 i18n keys added to both vi-VN / en-US in lockstep — parity test green. PQ1 = b: `User.role` deferred; ProfileButton ships with the user-only menu (Profile + Sign out via `<form action="/api/auth/signout" method="post">`). `i18n/index.ts` no longer imports the server-only logger so client islands (`NotificationBell`, `WidgetButton`, `ProfileButton`, `Toaster`) can call `t()` without bundler errors. Build / typecheck / lint all clean. |
 
 ---
@@ -299,7 +348,9 @@ flowchart TD
 
 - [x] Survey Homepage SAA (`i87tDx10uM`) — header reuse (`Header` + `LanguageSelector`) confirmed; outgoing edges to Awards Information / Sun* Kudos / Tiêu chuẩn chung / Profile dropdowns / Notification panel / Quick-actions FAB recorded.
 - [ ] Run `momorph.specify` for Homepage SAA to resolve open questions Q-H1..Q-H4 (event datetime source, awards data source, notification panel scope, profile-menu role routing).
-- [ ] Survey Profile dropdowns (`z4sCl3_Qtk`, `54rekaCHG1`) — confirm Logout → Login edge and reconcile with Figma legacy `Dropdown-profile` (`721:5223`) referenced from Homepage `A1.8`.
+- [x] Survey Profile dropdown user variant (`z4sCl3_Qtk`) — Logout → `/login` edge confirmed (`POST /api/auth/signout`); spec hồi tố ([specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md)).
+- [ ] Survey Profile dropdown admin variant (`54rekaCHG1`) — pending `User.role` schema migration (Homepage spec PQ1 = b). Sẽ kế thừa Profile + Sign out, thêm "Admin Dashboard".
+- [ ] Survey trang `/profile` (destination cho item `A.1` của dropdown profile user) — chấp nhận 404 ngắn hạn theo Q-DPU1.
 - [ ] Survey Awards Information and Sun* Kudos detail pages once their frame IDs are added to the file index (deep-link target `#<award-slug>` is required for `C2.*` cards).
 - [ ] Survey Notification panel and Quick-actions Widget overlays (anchored from Homepage `A1.6` and `#6`).
 - [ ] Survey 403 page (`T3e_iS9PCL`) — confirm "Back" target.

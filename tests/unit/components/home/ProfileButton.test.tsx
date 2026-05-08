@@ -1,5 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/src/actions/auth", () => ({
+  signOutAction: vi.fn(async () => undefined),
+}));
 
 import ProfileButton from "@/src/components/home/ProfileButton";
 import viCatalog from "@/src/lib/i18n/catalogs/vi-VN.json";
@@ -45,16 +50,20 @@ describe("ProfileButton (US2 / FR-005 — user variant per PQ1 = b)", () => {
     expect(profileItem).toHaveAttribute("href", "/profile");
   });
 
-  it("the Sign out menu item submits a POST form to /api/auth/signout", () => {
+  it("the Sign out menu item is a submit button inside a form bound to the signOut Server Action", () => {
     const { container } = render(
       <ProfileButton locale="vi-VN" name="Alice" image={null} />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Alice" }));
-    const form = container.querySelector("form[action='/api/auth/signout']");
+    const submitButton = screen.getByRole("menuitem", { name: SIGN_OUT_LABEL });
+    expect(submitButton).toHaveAttribute("type", "submit");
+    const form = submitButton.closest("form");
     expect(form).not.toBeNull();
-    expect(form).toHaveAttribute("method", "post");
-    const submitButton = form!.querySelector("button[type='submit']");
-    expect(submitButton).toHaveTextContent(SIGN_OUT_LABEL);
+    // React serializes Server Action references on the form element; the
+    // exact attribute name is internal, but the form must NOT keep the
+    // legacy raw URL action that triggered the MissingCSRF redirect bug.
+    expect(form).not.toHaveAttribute("action", "/api/auth/signout");
+    expect(container.querySelector("form[action='/api/auth/signout']")).toBeNull();
   });
 
   it("clicking outside the avatar/menu closes the menu (mousedown listener)", () => {
@@ -67,6 +76,25 @@ describe("ProfileButton (US2 / FR-005 — user variant per PQ1 = b)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Alice" }));
     expect(screen.getByRole("menu")).toBeInTheDocument();
     fireEvent.mouseDown(screen.getByTestId("outside"));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("pressing Escape while menu is open closes it and returns focus to trigger", async () => {
+    const user = userEvent.setup();
+    render(<ProfileButton locale="vi-VN" name="Alice" image={null} />);
+    const trigger = screen.getByRole("button", { name: "Alice" });
+    await user.click(trigger);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("pressing Escape while menu is closed is a no-op (no error, menu stays absent)", async () => {
+    const user = userEvent.setup();
+    render(<ProfileButton locale="vi-VN" name="Alice" image={null} />);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });

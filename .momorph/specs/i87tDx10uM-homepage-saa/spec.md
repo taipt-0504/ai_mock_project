@@ -98,7 +98,7 @@ The user uses the header to move around the site: click the logo to scroll to to
 5. **Given** the user hovers any non-active nav link, **When** the hover state engages, **Then** the link enters its hover treatment. Leaving the link reverts to the normal state.
 6. **Given** the user navigates to `/awards`, **When** the destination renders, **Then** the header's selected-link treatment shifts from `A1.2` to `A1.3` (per FR-019). Same logic for `/sun-kudos` → `A1.5`.
 7. **Given** the user clicks the language chip (`A1.7`), **When** the menu opens, **Then** behavior matches the shipped LanguageSelector exactly (cf. dropdown spec `hUyaaugye2`). No new code path.
-8. **Given** an authenticated regular user is on `/`, **When** they click the profile button (`A1.8`), **Then** the profile dropdown opens (overlay component `z4sCl3_Qtk`, deferred to its own spec; this Homepage spec only documents the trigger). The menu lists "Profile" and "Sign out".
+8. **Given** an authenticated regular user is on `/`, **When** they click the profile button (`A1.8`), **Then** the profile dropdown opens (overlay component `z4sCl3_Qtk` — see [`.momorph/specs/z4sCl3_Qtk-dropdown-profile/spec.md`](../z4sCl3_Qtk-dropdown-profile/spec.md) for full behavior; this Homepage spec only documents the trigger). The menu lists "Profile" and "Sign out".
 9. **Given** an authenticated admin user is on `/`, **When** they click the profile button, **Then** the menu lists "Profile", "Sign out", AND "Admin Dashboard" (admin-only entry).
 
 ---
@@ -246,7 +246,7 @@ The user scrolls past the hero and reads the three-paragraph theme essay (`B4`) 
 | `A1.5` Nav "Sun* Kudos"         | `I2167:9091;186:1593`                  | Normal-state nav link.                                                                                            | Click → navigate to `/sun-kudos`. Renders hover treatment on pointer hover.                                               |
 | `A1.6` Notification bell        | `I2167:9091;186:2101`                  | Icon button.                                                                                                      | Click → open notification panel (or Q6 stub). Unread indicator visible iff `notifications.unreadCount > 0` (binary, no count).|
 | `A1.7` Language chip            | `I2167:9091;186:1696`                  | Reuses [src/components/header/LanguageSelector.tsx](src/components/header/LanguageSelector.tsx).                  | Already shipped. No changes needed here.                                                                                  |
-| `A1.8` Profile avatar           | `I2167:9091;186:1597`                  | Avatar button.                                                                                                    | Click → open profile dropdown (`z4sCl3_Qtk` for user, `54rekaCHG1` for admin — both deferred to their own specs).         |
+| `A1.8` Profile avatar           | `I2167:9091;186:1597`                  | Avatar button.                                                                                                    | Click → open profile dropdown — user variant `z4sCl3_Qtk` ([spec](../z4sCl3_Qtk-dropdown-profile/spec.md)), admin variant `54rekaCHG1` (still deferred — pending `User.role` migration / PQ1 = b). |
 | `3.5` Hero "ROOT FURTHER"       | `2167:9027`                            | Key-visual + title block.                                                                                         | Static. Static copy includes the program title and "Coming soon" subtitle.                                                |
 | `B1` Countdown section          | `2167:9035`                            | Wraps `B1.2` subtitle and `B1.3` tile group.                                                                      | Auto-updates per minute against `SAA_EVENT_START_AT`. Hides "Coming soon" once the target is reached.                     |
 | `B1.2` "Coming soon" subtitle   | `2167:9036`                            | Label only.                                                                                                       | Hidden when `now >= eventStart`.                                                                                          |
@@ -285,7 +285,7 @@ The user scrolls past the hero and reads the three-paragraph theme essay (`B4`) 
   - `A1.5` / `7.4` / `B3.2` / `D2.1` → `/sun-kudos` (Sun* Kudos detail).
   - `7.5` → `/general-rules` (Tiêu chuẩn chung; route name pending Q1).
   - `A1.7` (Language chip) → opens `hUyaaugye2` overlay (already shipped).
-  - `A1.8` (Profile) → opens `z4sCl3_Qtk` (user) or `54rekaCHG1` (admin); both deferred to their own specs.
+  - `A1.8` (Profile) → opens `z4sCl3_Qtk` (user — [spec](../z4sCl3_Qtk-dropdown-profile/spec.md)) or `54rekaCHG1` (admin — still deferred). The selection logic by `User.role` lives in the parent that mounts the overlay (Homepage's Server Component); the overlays themselves stay role-agnostic.
   - `A1.6` (Notification bell) → opens notification panel overlay (deferred to its own spec).
   - `6` (FAB) → opens quick-action menu (deferred to its own spec).
 - **Self-loops** (do NOT route): `A1.1` / `A1.2` / `7.1` / `7.2` all scroll-to-top of the current page.
@@ -413,7 +413,7 @@ Documented in the dropdown spec; not repeated here.
 - The Sun* Kudos detail screen (`/sun-kudos`) — destination only.
 - The Tiêu chuẩn chung screen (`/general-rules`) — destination only; route name pending Q1.
 - The notification panel content / live updates / mark-as-read — only the badge and bell trigger are in scope.
-- The profile dropdown content (`z4sCl3_Qtk` / `54rekaCHG1`) — only the trigger button is in scope.
+- The profile dropdown content — only the trigger button is in scope. User variant overlay specced separately at [`.momorph/specs/z4sCl3_Qtk-dropdown-profile/spec.md`](../z4sCl3_Qtk-dropdown-profile/spec.md); admin variant `54rekaCHG1` still deferred.
 - The FAB quick-action menu content — only the trigger button visibility/anchoring is in scope.
 - Adding new locales beyond `vi-VN` / `en-US`.
 - Award data moving to the DB — static config sufficient for this iteration.
@@ -432,7 +432,8 @@ Documented in the dropdown spec; not repeated here.
 - [x] Dropdown spec for cross-references (`.momorph/specs/hUyaaugye2-dropdown-ngon-ngu/spec.md`)
 - [ ] Backend endpoint `/api/notifications/unread-count` (or substitute graceful-degradation rendering)
 - [ ] Routes `/awards`, `/sun-kudos`, `/general-rules` defined elsewhere (this spec only emits links)
-- [ ] Profile-dropdown component spec (`z4sCl3_Qtk` and `54rekaCHG1`) — needed before authenticated profile menu can be fully wired
+- [x] Profile-dropdown user-variant spec (`z4sCl3_Qtk`) — written 2026-05-08 hồi tố ([`.momorph/specs/z4sCl3_Qtk-dropdown-profile/spec.md`](../z4sCl3_Qtk-dropdown-profile/spec.md))
+- [ ] Profile-dropdown admin-variant spec (`54rekaCHG1`) — pending `User.role` schema migration (PQ1 = b)
 
 ---
 
