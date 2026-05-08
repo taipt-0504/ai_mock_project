@@ -47,4 +47,16 @@ describe("config", () => {
     const { config } = await import("@/src/lib/config");
     expect(() => config.AUTH_SECRET).toThrow(/AUTH_SECRET/);
   });
+
+  it("exposes SAA_LAUNCH_AT as an optional string when set", async () => {
+    process.env.SAA_LAUNCH_AT = "2026-06-01T09:00:00+07:00";
+    const { config } = await import("@/src/lib/config");
+    expect(config.SAA_LAUNCH_AT).toBe("2026-06-01T09:00:00+07:00");
+  });
+
+  it("SAA_LAUNCH_AT is undefined when env var is unset (runtime fail-closed lives in parseLaunchAt, not at parse-time)", async () => {
+    delete process.env.SAA_LAUNCH_AT;
+    const { config } = await import("@/src/lib/config");
+    expect(config.SAA_LAUNCH_AT).toBeUndefined();
+  });
 });

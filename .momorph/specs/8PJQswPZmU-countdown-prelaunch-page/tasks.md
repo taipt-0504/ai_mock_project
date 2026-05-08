@@ -38,20 +38,20 @@
 
 ### Logic — config + i18n
 
-- [ ] T004 Extend Zod schema with `SAA_LAUNCH_AT: z.string().optional()` and expose `config.SAA_LAUNCH_AT` (mirror `SAA_EVENT_START_AT` shape; runtime fail-closed lives in `parseLaunchAt`, NOT at schema-parse time) | src/lib/config.ts
-- [ ] T005 [P] Extend `tests/unit/lib/config.test.ts` so the schema-parity assertion includes `SAA_LAUNCH_AT` | tests/unit/lib/config.test.ts
-- [ ] T006 [P] Add `parseLaunchAt(envValue: string \| undefined): Date \| null` (mirror `parseEventStart`'s contract: returns `null` for missing / empty / non-string / NaN; accepts whatever `new Date(value)` accepts). One-line `// why:` comment captures the always-fail-closed reason for `null` | src/lib/event/event-config.ts
-- [ ] T007 [P] Extend `tests/unit/lib/event/event-config.test.ts` with `parseLaunchAt` cases: `undefined`, `""`, `"not-a-date"`, `"2025"`, `"2025-13-99"`, future ISO, past ISO. Each `null` source asserts `=== null` | tests/unit/lib/event/event-config.test.ts
-- [ ] T008 [P] Add `"prelaunch.heading"` key to `vi-VN` catalog (e.g. `"Sự kiện sẽ bắt đầu sau"`) | src/lib/i18n/catalogs/vi-VN.json
-- [ ] T009 [P] Add `"prelaunch.heading"` key to `en-US` catalog (e.g. `"Coming soon"`). MUST land in the same commit as T008 — `tests/unit/lib/i18n/parity.test.ts` will fail otherwise | src/lib/i18n/catalogs/en-US.json
+- [x] T004 Extend Zod schema with `SAA_LAUNCH_AT: z.string().optional()` and expose `config.SAA_LAUNCH_AT` (mirror `SAA_EVENT_START_AT` shape; runtime fail-closed lives in `parseLaunchAt`, NOT at schema-parse time) | src/lib/config.ts
+- [x] T005 [P] Extend `tests/unit/lib/config.test.ts` so the schema-parity assertion includes `SAA_LAUNCH_AT` | tests/unit/lib/config.test.ts
+- [x] T006 [P] Add `parseLaunchAt(envValue: string \| undefined): Date \| null` (mirror `parseEventStart`'s contract: returns `null` for missing / empty / non-string / NaN; accepts whatever `new Date(value)` accepts). One-line `// why:` comment captures the always-fail-closed reason for `null` | src/lib/event/event-config.ts
+- [x] T007 [P] Extend `tests/unit/lib/event/event-config.test.ts` with `parseLaunchAt` cases: `undefined`, `""`, `"not-a-date"`, `"2025"`, `"2025-13-99"`, future ISO, past ISO. Each `null` source asserts `=== null` | tests/unit/lib/event/event-config.test.ts
+- [x] T008 [P] Add `"prelaunch.heading"` key to `vi-VN` catalog (e.g. `"Sự kiện sẽ bắt đầu sau"`) | src/lib/i18n/catalogs/vi-VN.json
+- [x] T009 [P] Add `"prelaunch.heading"` key to `en-US` catalog (e.g. `"Coming soon"`). MUST land in the same commit as T008 — `tests/unit/lib/i18n/parity.test.ts` will fail otherwise | src/lib/i18n/catalogs/en-US.json
 
 ### Logic — gate decision module (pure, isolable)
 
-- [ ] T010 Create `GateDecision` tagged-union type (`{ type: "passthrough" } \| { type: "redirect", target: "/coming-soon" \| "/" }`) | src/lib/proxy/prelaunch-gate.types.ts
-- [ ] T011 Implement `isWhitelisted(pathname: string): boolean` covering `/coming-soon`, `pathname.startsWith("/_next/")`, root-level static (`/favicon.ico`, `/robots.txt`, `/sitemap.xml`), `pathname.startsWith("/assets/")`, exact `/api/health`. NOT whitelisted: any `/api/auth/*` (Q-PG4) | src/lib/proxy/prelaunch-gate.ts
-- [ ] T012 Implement `evaluateGate(pathname: string, launchAt: Date \| null, now: Date): GateDecision`. Decision matrix:<br>• `pathname === "/coming-soon"` → if `launchAt && launchAt <= now` → `redirect "/"`; else `passthrough`.<br>• `isWhitelisted(pathname)` → `passthrough` always.<br>• otherwise → if `launchAt === null \|\| launchAt > now` → `redirect "/coming-soon"`; else `passthrough`. <br>Take `now` as a parameter so tests can pin the clock | src/lib/proxy/prelaunch-gate.ts
-- [ ] T013 [P] Vitest for `evaluateGate`: every cell of the decision matrix (gate-active × {prelaunch, each whitelist entry, /, /login, /awards, /api/auth/callback}; gate-lifted × same set; null env × same set; race at zero boundary `launchAt = now ± 1ms`) | tests/unit/lib/proxy/prelaunch-gate.test.ts
-- [ ] T014 [P] Vitest abuse-case: path-traversal — `/coming-soon/../awards` and `/_next/../awards` both resolve to a redirect (NOT passthrough) because `URL.pathname` normalizes before reaching `isWhitelisted` | tests/unit/lib/proxy/prelaunch-gate.test.ts (same file as T013)
+- [x] T010 Create `GateDecision` tagged-union type (`{ type: "passthrough" } \| { type: "redirect", target: "/coming-soon" \| "/" }`) | src/lib/proxy/prelaunch-gate.types.ts
+- [x] T011 Implement `isWhitelisted(pathname: string): boolean` covering `/coming-soon`, `pathname.startsWith("/_next/")`, root-level static (`/favicon.ico`, `/robots.txt`, `/sitemap.xml`), `pathname.startsWith("/assets/")`, exact `/api/health`. NOT whitelisted: any `/api/auth/*` (Q-PG4) | src/lib/proxy/prelaunch-gate.ts
+- [x] T012 Implement `evaluateGate(pathname: string, launchAt: Date \| null, now: Date): GateDecision`. Decision matrix:<br>• `pathname === "/coming-soon"` → if `launchAt && launchAt <= now` → `redirect "/"`; else `passthrough`.<br>• `isWhitelisted(pathname)` → `passthrough` always.<br>• otherwise → if `launchAt === null \|\| launchAt > now` → `redirect "/coming-soon"`; else `passthrough`. <br>Take `now` as a parameter so tests can pin the clock | src/lib/proxy/prelaunch-gate.ts
+- [x] T013 [P] Vitest for `evaluateGate`: every cell of the decision matrix (gate-active × {prelaunch, each whitelist entry, /, /login, /awards, /api/auth/callback}; gate-lifted × same set; null env × same set; race at zero boundary `launchAt = now ± 1ms`) | tests/unit/lib/proxy/prelaunch-gate.test.ts
+- [x] T014 [P] Vitest abuse-case: path-traversal — `/coming-soon/../awards` and `/_next/../awards` both resolve to a redirect (NOT passthrough) because `URL.pathname` normalizes before reaching `isWhitelisted` | tests/unit/lib/proxy/prelaunch-gate.test.ts (same file as T013)
 
 **Checkpoint**: All Phase 2 tests green. `npm run test` includes new cases; `tsc --noEmit` clean. No proxy or route changes have shipped — local dev still works as before.
 
