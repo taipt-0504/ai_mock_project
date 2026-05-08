@@ -39,7 +39,7 @@
 | # | Component Name | Frame ID | Figma Link | Status | Used By | Navigations To |
 |---|----------------|----------|------------|--------|---------|----------------|
 | C1 | Dropdown — Language | `hUyaaugye2` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=hUyaaugye2 | surveyed (2026-05-07) | Login (`GzbNeVGJHz`), Homepage SAA (`i87tDx10uM`, confirmed via header item `A1.7`), other authenticated screens with the header | none — selection updates locale in place |
-| C2 | Dropdown — Profile (user) | `z4sCl3_Qtk` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=z4sCl3_Qtk | surveyed (2026-05-08) | Homepage SAA (`A1.8`); future authenticated user routes reusing the header | Profile route (`/profile` — TBD); Login (after Logout via `POST /api/auth/signout`) |
+| C2 | Dropdown — Profile (user) | `z4sCl3_Qtk` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=z4sCl3_Qtk | surveyed (2026-05-08) | Homepage SAA (`A1.8`); future authenticated user routes reusing the header | Profile route (`/profile` — stub shipped 2026-05-08); Login (after Logout via Server Action `signOutAction`) |
 | C3 | Dropdown — Profile (admin) | `54rekaCHG1` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=54rekaCHG1 | pending | admin routes | Login (Logout — inferred) |
 
 ---
@@ -98,8 +98,10 @@ remains pending until `User.role` schema migration ships (Homepage spec PQ1 = b)
 
 **Behavior**:
 - Click avatar `A1.8` → opens overlay; click again or click outside / `Esc` → closes.
-- Click `A.1` Profile → Next.js `<Link href="/profile">` navigation. `/profile` route is TBD
-  (open question Q-DPU1 / spec Q1).
+- Click `A.1` Profile → Next.js `<Link href="/profile">` navigation. `/profile` shipped as
+  stub placeholder 2026-05-08 ([app/profile/page.tsx](app/profile/page.tsx)) — Q-DPU1 closed
+  (option (a) reversed → option (b) stub due to 404→back hydration bug; see
+  `z4sCl3_Qtk-dropdown-profile/spec.md` Q1 + Q6).
 - Click `A.2` Logout → `<form action={signOutAction}>` submit (Server Action defined at
   `src/actions/auth.ts`) → Auth.js v5 `signOut({ redirectTo: "/login" })` invalidates session
   and redirects to `/login` (mirror of Login spec US1; closes the authenticated state machine).
@@ -110,7 +112,7 @@ remains pending until `User.role` schema migration ships (Homepage spec PQ1 = b)
 - No role branching in this component; admin variant lives in `54rekaCHG1`.
 
 **Edges**:
-- Outgoing: `/profile` (TBD destination), `/login` (after logout).
+- Outgoing: `/profile` (stub placeholder shipped 2026-05-08), `/login` (after logout).
 - Incoming: avatar `A1.8` of every authenticated user route reusing the header.
 
 **Implementation status**: **Already shipped** with Homepage SAA Phase 13 (commit
@@ -120,7 +122,7 @@ Mounted via `Header`'s `profileMenu` slot. Unit tests: [tests/unit/components/ho
 Frame `z4sCl3_Qtk` is a tài liệu tham chiếu chống regression cho biến thể user, không phải build target mới.
 
 **Open questions** (chốt trong spec):
-- **Q-DPU1**: `/profile` route — milestone hiện tại có làm trang đích, hay chấp nhận 404 ngắn hạn? (Khuyến nghị: chấp nhận 404, đặt task survey `/profile`.)
+- **Q-DPU1**: ~~`/profile` route — milestone hiện tại có làm trang đích, hay chấp nhận 404 ngắn hạn?~~ **Closed 2026-05-08**: stub placeholder ship ([app/profile/page.tsx](app/profile/page.tsx)). Lý do đảo từ "chấp nhận 404" → "stub": hydration bug ở Next.js 16 + Turbopack dev khi back-navigate từ route 404 (xem `z4sCl3_Qtk-dropdown-profile/spec.md` Q6).
 - **Q-DPU2**: Bổ sung `keydown` listener cho `Escape` để đóng overlay + trả focus về trigger (đồng bộ pattern với LanguageSelector). (Khuyến nghị: thêm.)
 - **Q-DPU3**: Logic chọn biến thể (user vs. admin) phụ thuộc vào `User.role` schema — khi nào unblock biến thể admin?
 
@@ -216,9 +218,9 @@ flowchart TD
 
     subgraph Main["Main Application"]
         Home["Homepage SAA<br/>i87tDx10uM"]
-        Awards["Awards Information<br/>(TBD)"]
-        Kudos["Sun* Kudos<br/>(TBD)"]
-        Standards["Tiêu chuẩn chung<br/>(TBD)"]
+        Awards["Awards Information<br/>(stub 2026-05-08)"]
+        Kudos["Sun* Kudos<br/>(stub 2026-05-08)"]
+        Standards["Tiêu chuẩn chung<br/>(stub 2026-05-08)"]
     end
 
     subgraph Errors["Error / Edge"]
@@ -275,9 +277,10 @@ flowchart TD
 | Screen | Purpose | Entry Points |
 |--------|---------|--------------|
 | Homepage SAA (`i87tDx10uM`) | Post-auth landing — hero / countdown / award catalog / Sun* Kudos promo / footer | Login success, direct visit while authenticated, Logo / `About SAA 2025` link from any other page |
-| Awards Information (TBD) | Per-award detail content; deep-links to `#<award-slug>` | Header `Awards Information`, footer link, `ABOUT AWARDS` CTA, any award card on Homepage |
-| Sun* Kudos (TBD) | Sun* Kudos campaign detail | Header `Sun* Kudos`, footer link, `ABOUT KUDOS` CTA, Sun* Kudos block `Chi tiết` |
-| Tiêu chuẩn chung (TBD) | Shared standards / criteria page | Footer `7.5` |
+| Awards Information (stub 2026-05-08) | Per-award detail content; deep-links to `#<award-slug>`. Stub at [app/awards/page.tsx](app/awards/page.tsx) — placeholder pending real implementation. | Header `Awards Information`, footer link, `ABOUT AWARDS` CTA, any award card on Homepage |
+| Sun* Kudos (stub 2026-05-08) | Sun* Kudos campaign detail. Stub at [app/sun-kudos/page.tsx](app/sun-kudos/page.tsx) — placeholder pending real implementation. | Header `Sun* Kudos`, footer link, `ABOUT KUDOS` CTA, Sun* Kudos block `Chi tiết` |
+| Tiêu chuẩn chung (stub 2026-05-08) | Shared standards / criteria page. Stub at [app/general-rules/page.tsx](app/general-rules/page.tsx) — placeholder pending real implementation. | Footer `7.5` |
+| Profile (stub 2026-05-08) | User profile destination. Stub at [app/profile/page.tsx](app/profile/page.tsx) — placeholder pending Profile spec survey. | Profile dropdown `A.1` Hồ sơ |
 
 ### Group: Errors
 | Screen | Purpose | Entry Points |
@@ -339,6 +342,7 @@ flowchart TD
 | 2026-05-07 | Screen survey | Homepage SAA (`i87tDx10uM`) | Mapped Figma frame `2167:9026`: header `A1` reuses shipped `Header` + `LanguageSelector` (locale chip `A1.7`); confirmed outgoing routes to Awards Information (`A1.3`, `B3.1` ABOUT AWARDS, footer `7.3`, six award cards `C2.1`–`C2.6` with `#<award-slug>` deep-links), Sun* Kudos (`A1.5`, `B3.2` ABOUT KUDOS, footer `7.4`, `D1`/`D2.1` Sun* Kudos block), Tiêu chuẩn chung (footer `7.5`). Overlays: `A1.7` → Dropdown — Language, `A1.8` → Dropdown — Profile (user `z4sCl3_Qtk` / admin `54rekaCHG1`; Figma legacy linkedFrameId `721:5223` noted), `A1.6` → Notification panel (TBD), `#6` FAB → quick-actions menu (TBD). Predicted APIs added: `GET /api/users/me`, `GET /api/event/config`, `GET /api/awards`, `GET /api/notifications`, `GET /api/kudos/summary`. New components anticipated: `Countdown`, `AwardCard`/`AwardGrid`, `CTAButton`, `NotificationBell`, `ProfileMenu`, `Footer`, `Logo`, `WidgetButton`. Mermaid graph extended with Awards / Sun* Kudos / Tiêu chuẩn chung route nodes and Notification / Quick-actions overlays. |
 | 2026-05-07 | Access-control flip | Homepage SAA (`i87tDx10uM`) | Homepage flipped from "open with conditional auth UI" → **authenticated-only**. Anonymous visitors are redirected to `/login` per spec FR-001a / US0; chain is symmetrical with Login spec US2. Spec Q3 (FAB visibility for anon) and Q5 (sign-in CTA on anon header) collapsed to "not applicable". FR-004 / FR-015 simplified to "always render" (no conditional anon variant). Mermaid graph adds `Home → Login` edge labeled "anon visitor (FR-001a)". Awards data confirmed static (Q2). Footer "Tiêu chuẩn chung" route locked to `/general-rules` (Q1). Header reuse confirmed: extend existing `Header` with optional slots, no fork (Q4). |
 | 2026-05-08 | Component survey + retroactive spec | Dropdown — Profile user (`z4sCl3_Qtk`) | Mapped Figma frame `721:5223`: `A_Dropdown-List` (`666:9601`) chứa `A.1_Profile` (icon_text + user icon) và `A.2_Logout` (icon_text + chevron-right). Logout edge → `/login` confirmed (đã wired qua `<form action="/api/auth/signout" method="post">`, ship cùng Homepage Phase 13). Profile edge → `/profile` (TBD route — Q-DPU1). Spec viết hồi tố ở [specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md) để khoá hành vi (US1 mở/đóng, US2 navigate Profile, US3 signout, US4 dismiss, US5 keyboard/a11y), neo Node IDs, và làm điểm tham chiếu cho biến thể admin `54rekaCHG1` sẽ có spec riêng khi `User.role` migration unblock. Homepage spec không cần cập nhật — `A1.8` đã reference đúng overlay. Component file [src/components/home/ProfileButton.tsx](src/components/home/ProfileButton.tsx); 7 ca unit test xanh. Open questions: Q-DPU1 `/profile` 404 / stub / scope; Q-DPU2 thêm Escape handler; Q-DPU3 unblock admin variant. |
+| 2026-05-08 | Bug fix + stub routes | Homepage SAA (`i87tDx10uM`) + Dropdown — Profile (`z4sCl3_Qtk`) | **Hydration bug on back-from-404 fixed via stub pages.** User reported: clicking any nav/footer link from homepage navigates correctly, but on browser back the avatar / language / notification-bell click handlers no longer respond. Root cause: in Next.js 16 + Turbopack dev, when user clicks `<Link>` to a non-existent route, Next.js renders 404; clicking back fails to re-attach React to the homepage DOM (verified: `<main>` loses `__reactFiber`/`__reactProps`, avatar button loses `__reactProps.onClick`; click events still bubble to `document` but React event delegation is dead). Custom `app/not-found.tsx` was tried first and verified NOT to fix it (only changes the 404 UI, doesn't restore hydration). Fix: stub pages for the 4 missing destinations referenced from homepage — [app/awards/page.tsx](app/awards/page.tsx), [app/sun-kudos/page.tsx](app/sun-kudos/page.tsx), [app/general-rules/page.tsx](app/general-rules/page.tsx), [app/profile/page.tsx](app/profile/page.tsx) — each authed-gated and rendering shared [src/components/ui/StubPage.tsx](src/components/ui/StubPage.tsx) (title + "Trang đang được xây dựng" + Link back to `/`). Eliminates the 404 trigger so back navigation no longer corrupts hydration. Verified via Playwright headless across all 4 routes: avatar/language/bell click all work after back. **This is a workaround**, not a Next.js fix — the underlying bug should be reported upstream with minimal repro. Spec sync: dropdown-profile/spec.md Q1 reversed (404 → stub) and Q6 added documenting full diagnosis; SCREENFLOW Main Application screens table + Mermaid graph + Q-DPU1 + Next Steps backlog all flipped from `(TBD)` → `(stub 2026-05-08)`. Lint + tsc clean. |
 | 2026-05-08 | Bug fix + spec sync | Dropdown — Profile user (`z4sCl3_Qtk`) | **Signout pattern migrated to Server Action.** User reported click "Đăng xuất" → 302 redirect tới `/api/auth/signin?error=MissingCSRF` instead of `/login`. Root cause: shipped raw `<form action="/api/auth/signout" method="post">` (NextAuth v4 pattern) but project uses Auth.js v5, which requires CSRF token in body for the catch-all `/api/auth/signout` POST. Fix: created [src/actions/auth.ts](src/actions/auth.ts) with `"use server"` exporting `signOutAction()` that calls `signOut({ redirectTo: "/login" })`; ProfileButton now uses `<form action={signOutAction}>`. Next.js Server Action token handles CSRF; Auth.js deletes Session row + clears cookie + redirects. Verified end-to-end via Playwright headless with real session cookie: final URL `/login`, session row deleted. Unit test updated (mock the action to keep jsdom env from loading NextAuth). spec.md hygiene: FR-005 / TR-007 / Security CSRF / API table / Implementation Status / acceptance scenarios all synced; Q5 added to Resolved Questions. SCREENFLOW behavior bullet (line 103) updated; raw `/api/auth/signout` form action now flagged forbidden. |
 | 2026-05-07 | UI implementation | Homepage SAA (`i87tDx10uM`) | Phases 1–13 of [tasks.md](specs/i87tDx10uM-homepage-saa/tasks.md) shipped. Reused existing `Header` (extended with `nav` / `notification` / `profileMenu` / `logoHref` slots — slim variant unchanged for Login regression), `LanguageSelector`, `Logo` (now accepts optional `href`), `auth()`, `getSaaLocale()`. New components under [src/components/home/](src/components/home/): `Hero`, `Countdown`, `EventInfo`, `CTAButtons`, `RootFurtherEssay`, `AwardsSectionHeader`, `AwardCard`, `AwardsGrid`, `KudosBlock`, `NavLinks`, `Footer`, `WidgetButton`, `NotificationBell`, `ProfileButton`. New primitives under [src/components/ui/](src/components/ui/): `toast.ts` + `Toaster.tsx` (in-house, mounted in [app/layout.tsx](app/layout.tsx)). New backend: `app/api/notifications/unread-count/route.ts` → `notification-service` → `notification-repository` (v1 stub `0`). Static config at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) (six entries with stable slugs), env parser at [src/lib/event/event-config.ts](src/lib/event/event-config.ts). Tailwind tokens added: `saa-card-surface/border`, `saa-essay-quote-fg`, `saa-fab-bg/fg`, `saa-footer-bg/fg`, `saa-notification-dot`. ~36 i18n keys added to both vi-VN / en-US in lockstep — parity test green. PQ1 = b: `User.role` deferred; ProfileButton ships with the user-only menu (Profile + Sign out via `<form action="/api/auth/signout" method="post">`). `i18n/index.ts` no longer imports the server-only logger so client islands (`NotificationBell`, `WidgetButton`, `ProfileButton`, `Toaster`) can call `t()` without bundler errors. Build / typecheck / lint all clean. |
 
@@ -350,7 +354,7 @@ flowchart TD
 - [ ] Run `momorph.specify` for Homepage SAA to resolve open questions Q-H1..Q-H4 (event datetime source, awards data source, notification panel scope, profile-menu role routing).
 - [x] Survey Profile dropdown user variant (`z4sCl3_Qtk`) — Logout → `/login` edge confirmed (`POST /api/auth/signout`); spec hồi tố ([specs/z4sCl3_Qtk-dropdown-profile/spec.md](specs/z4sCl3_Qtk-dropdown-profile/spec.md)).
 - [ ] Survey Profile dropdown admin variant (`54rekaCHG1`) — pending `User.role` schema migration (Homepage spec PQ1 = b). Sẽ kế thừa Profile + Sign out, thêm "Admin Dashboard".
-- [ ] Survey trang `/profile` (destination cho item `A.1` của dropdown profile user) — chấp nhận 404 ngắn hạn theo Q-DPU1.
+- [ ] Survey trang `/profile` (destination cho item `A.1` của dropdown profile user) — stub placeholder ship 2026-05-08 ([app/profile/page.tsx](app/profile/page.tsx)) làm tạm; spec/implementation thực vẫn pending. Q-DPU1 đảo từ "chấp nhận 404" → "stub" do hydration bug.
 - [ ] Survey Awards Information and Sun* Kudos detail pages once their frame IDs are added to the file index (deep-link target `#<award-slug>` is required for `C2.*` cards).
 - [ ] Survey Notification panel and Quick-actions Widget overlays (anchored from Homepage `A1.6` and `#6`).
 - [ ] Survey 403 page (`T3e_iS9PCL`) — confirm "Back" target.
