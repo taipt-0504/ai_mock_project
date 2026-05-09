@@ -61,9 +61,13 @@ jobs:
       - run: npm run test
 
   e2e:
-    name: End-to-end (Playwright)
+    name: End-to-end — gate-${{ matrix.gate-state }}
     runs-on: ubuntu-latest
     container: mcr.microsoft.com/playwright:v1.59.1-jammy
+    strategy:
+      fail-fast: false
+      matrix:
+        gate-state: [active, disabled]
     services:
       postgres:
         image: postgres:15-alpine
@@ -98,12 +102,16 @@ jobs:
       - run: npm run db:test:reset
       - name: Build the app
         run: npm run build
-      - name: Run E2E
-        run: npm run test:e2e
+      # Each cell injects SAA_LAUNCH_AT via the npm script (test:e2e:gate-*).
+      # Both cells must pass for merge — Homepage / Login regression suites
+      # ride the gate-disabled cell (SC-005), prelaunch gate-active specs
+      # ride the gate-active cell.
+      - name: Run E2E (gate-${{ matrix.gate-state }})
+        run: npm run test:e2e:gate-${{ matrix.gate-state }}
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-gate-${{ matrix.gate-state }}
           path: playwright-report
           retention-days: 14

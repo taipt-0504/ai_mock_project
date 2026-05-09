@@ -17,7 +17,7 @@ import { clearAuthTables, disconnect, seedAuthenticatedUser } from "../fixtures/
  * to `/coming-soon`. With or without a session cookie — the gate is
  * auth-agnostic.
  */
-test.describe("Prelaunch gate — every shipped route redirects to /coming-soon", () => {
+test.describe("Prelaunch gate-active — every shipped route redirects to /coming-soon", () => {
   const SHIPPED_ROUTES = [
     "/",
     "/login",
@@ -98,7 +98,6 @@ test.describe("Prelaunch gate — every shipped route redirects to /coming-soon"
     test("authenticated user requesting / still 307s to /coming-soon", async ({ page, context }) => {
       const { sessionToken } = await seedAuthenticatedUser({
         email: "gate-active-test@example.com",
-        name: "Gate Active Test",
       });
       await context.addCookies([
         {
@@ -115,6 +114,34 @@ test.describe("Prelaunch gate — every shipped route redirects to /coming-soon"
       const response = await page.request.get("/", { maxRedirects: 0 });
       expect([302, 303, 307, 308]).toContain(response.status());
       expect(response.headers()["location"]).toBe("/coming-soon");
+    });
+  });
+});
+
+/**
+ * T038 — 360 px viewport smoke (Principle III + Phase 7).
+ *
+ * Mobile-floor regression: the prelaunch surface MUST not horizontally
+ * scroll at the 360 px width floor. A screenshot is captured for manual
+ * review on every CI run.
+ */
+test.describe("Prelaunch gate-active — 360 px viewport smoke (US1 / Principle III)", () => {
+  test.use({ viewport: { width: 360, height: 640 } });
+
+  test("/coming-soon at 360 px has no horizontal scrollbar", async ({ page }, testInfo) => {
+    await page.goto("/coming-soon");
+
+    const overflows = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(overflows).toBe(false);
+
+    // Capture a screenshot for manual review (attached to the Playwright
+    // report so reviewers can eyeball legibility of the tiles).
+    const screenshot = await page.screenshot({ fullPage: true });
+    await testInfo.attach("coming-soon-360px.png", {
+      body: screenshot,
+      contentType: "image/png",
     });
   });
 });
