@@ -15,7 +15,7 @@ Replace the existing stub at [app/awards/page.tsx](../../../app/awards/page.tsx)
 
 The plan reuses **every** layout-level component already shipped by Homepage Phase 13: `Header` (composed via slot props — `nav={<NavLinks currentPath="/awards" />}` flips the existing `Awards Information` link to its active state automatically; `notification`, `profileMenu`, `logoHref` slots populated identically to Homepage), `Footer`, `KudosBlock`, `Logo`, `LanguageSelector`, `NotificationBell`, `ProfileButton`, `WidgetButton`, plus the existing `NavLinks` component (already includes `{ href: "/awards", labelKey: "home.nav.awards" }` — no change needed). The only *new* code is:
 
-1. **Static-catalog extension** in [src/lib/awards/awards.ts](../../../src/lib/awards/awards.ts) — append four new fields per award (`quantity`, `unit`, `valueVND`, `valueVNDSecondary`) and an `awardImageAsset` field for the 336×336 detail thumbnail (different from the existing card-label asset used on Homepage).
+1. **Static-catalog extension** in [src/lib/awards/awards.ts](../../../src/lib/awards/awards.ts) — append four new fields per award (`quantity`, `unitKey`, `valueVND`, `valueVNDSecondary`). **`awardImageAsset` field DROPPED 2026-05-09 (T001 discovery)**: the Awards page reuses Homepage's existing `labelAsset` (per-award text-label PNG, 222×36 to 232×64) + `AWARD_BG_ASSET` (shared 336×336 background); no per-award detail thumbnails exist in the Figma design. Verified via `list_media_nodes` + `get_node_context` on `D.1.1_Picture-Award` (componentId `81:2443`) — same `box-shadow` and dimensions as Homepage's `AwardCard`.
 2. **Four new feature-folder components** under `src/components/awards/`: `AwardsLayout`, `AwardsNav` (Client Component island — owns `IntersectionObserver` + active-state), `AwardDetailCard`, `AwardsList`.
 3. **Six new asset files** at `public/assets/awards/` — one square thumbnail per award.
 4. **New `awards.detail.*` i18n keys** (description, quantity-label, value-label, unit translations) in both `vi-VN` and `en-US` catalogs in lockstep.
@@ -232,7 +232,7 @@ tests/unit/lib/awards/awards.test.ts               # Phase 1 EXTENDS the existin
   - `unitKey: string | null` — i18n key for the unit ("Đơn vị" / "Tập thể" / "Cá nhân"), or `null` for awards with no unit (Signature 2025 / MVP).
   - `valueVND: number` — primary monetary value.
   - `valueVNDSecondary: number | null` — secondary tier (only Signature 2025).
-  - `awardImageAsset: string` — path to the new 336×336 detail thumbnail (distinct from the existing 232×n `labelAsset` used on Homepage cards).
+  - **DROPPED — `awardImageAsset` field NOT needed.** T001 (Phase 1) discovered the Awards page reuses Homepage's existing `labelAsset` (per-award text-label PNG) + `AWARD_BG_ASSET` (shared 336×336 background frame) — same component as Homepage `AwardCard`. No new field on the `Award` type.
 - Populate the six entries with values per the spec catalog table:
   | slug | quantity | unitKey | valueVND | valueVNDSecondary |
   |------|----------|---------|----------|-------------------|
