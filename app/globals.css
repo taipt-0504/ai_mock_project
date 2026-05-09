@@ -40,6 +40,14 @@
      border; the digit itself is set in the DSEG7-Classic 7-segment font. */
   --color-saa-countdown-tile-border: #ffea9e;
   --color-saa-countdown-digit-fg: #ffffff;
+
+  /* SAA 2025 — Awards Information page tokens (sourced from Figma frame zFYDgyj_pD).
+     `--saa-header-scroll-margin` is the offset applied via `scroll-margin-top` on each
+     award detail card so deep-link anchor jumps don't get hidden under the header.
+     The deployed Header uses `position: absolute; top: 0` (h-20 = 80px) — it scrolls
+     AWAY with the page on scroll, so 0px is the correct value today. If the Header is
+     later converted to `position: sticky` / `position: fixed`, set this to `5rem`. */
+  --saa-header-scroll-margin: 0px;
 }
 
 @theme inline {
