@@ -69,7 +69,7 @@ export default function LoginButton({ labels }: { labels: LoginButtonLabels }) {
         aria-label={labels.label}
         className="flex h-[60px] w-[305px] items-center justify-start gap-2 rounded-lg bg-saa-button-primary px-6 py-4 disabled:opacity-70"
       >
-        <span className="flex h-7 w-[225px] items-center justify-center font-display text-[22px] font-bold leading-7 text-saa-button-primary-fg">
+        <span className="flex h-7 w-[225px] items-center justify-center font-display text-[22px] font-bold leading-7 whitespace-nowrap text-saa-button-primary-fg">
           {labels.label}
         </span>
         <Image
