@@ -33,6 +33,13 @@
   --color-saa-footer-bg: #00070c;
   --color-saa-footer-fg: #ffffff;
   --color-saa-notification-dot: #d4271d;
+
+  /* SAA 2025 — Countdown LED tile tokens (sourced from Figma frames
+     8PJQswPZmU "Countdown - Prelaunch page" and i87tDx10uM "Homepage SAA"
+     B1.3). Each digit renders inside a glassmorphic tile with a thin golden
+     border; the digit itself is set in the DSEG7-Classic 7-segment font. */
+  --color-saa-countdown-tile-border: #ffea9e;
+  --color-saa-countdown-digit-fg: #ffffff;
 }
 
 @theme inline {
@@ -42,6 +49,7 @@
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-montserrat);
   --font-display-alt: var(--font-montserrat-alt);
+  --font-led: var(--font-dseg7);
 
   /* Tailwind v4 token registration: makes `bg-saa-page`, `text-saa-page-fg`,
      `bg-saa-header`, `bg-saa-button-primary`, `text-saa-button-primary-fg`
@@ -62,6 +70,58 @@
   --color-saa-footer-bg: var(--color-saa-footer-bg);
   --color-saa-footer-fg: var(--color-saa-footer-fg);
   --color-saa-notification-dot: var(--color-saa-notification-dot);
+  --color-saa-countdown-tile-border: var(--color-saa-countdown-tile-border);
+  --color-saa-countdown-digit-fg: var(--color-saa-countdown-digit-fg);
+}
+
+/* SAA 2025 — Countdown LED digit tile (Figma frames 8PJQswPZmU prelaunch +
+   i87tDx10uM homepage B1.3). Glassmorphic surface: white→white-10% gradient
+   at 0.5 opacity behind the digit, golden border, backdrop blur. Two size
+   variants — `lg` (prelaunch hero) and `md` (homepage) — set their own
+   border-width / radius / blur via CSS variables. */
+.saa-countdown-tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--saa-tile-w);
+  height: var(--saa-tile-h);
+  border-radius: var(--saa-tile-radius);
+  overflow: hidden;
+}
+
+.saa-countdown-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: var(--saa-tile-border-w) solid var(--color-saa-countdown-tile-border);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  opacity: 0.5;
+  backdrop-filter: blur(var(--saa-tile-blur));
+  -webkit-backdrop-filter: blur(var(--saa-tile-blur));
+  z-index: -1;
+}
+
+.saa-countdown-tile-lg {
+  --saa-tile-w: 77px;
+  --saa-tile-h: 123px;
+  --saa-tile-radius: 12px;
+  --saa-tile-border-w: 0.75px;
+  --saa-tile-blur: 24.96px;
+}
+
+.saa-countdown-tile-md {
+  --saa-tile-w: 51px;
+  --saa-tile-h: 82px;
+  --saa-tile-radius: 8px;
+  --saa-tile-border-w: 0.5px;
+  --saa-tile-blur: 16.64px;
 }
 
 body {

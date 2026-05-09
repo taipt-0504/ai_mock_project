@@ -309,6 +309,22 @@
 
 ---
 
+## Phase 14 — Countdown LED redesign (post-launch visual update, 2026-05-09)
+
+**Goal**: Bring the `B1.3` countdown tiles in line with the Figma "Digital Numbers" / LED design that appears on both Homepage SAA (`i87tDx10uM`) and the Prelaunch page (`8PJQswPZmU`). Functional contract (per-minute tick, zero-padding, zero-state hiding the subtitle, visibilitychange recovery) is **unchanged** — this phase is visual only.
+
+**Scope**: each two-digit unit (`Days`/`Hours`/`Minutes`) renders as **two independent glassmorphic tiles**, one per digit, with the digit rendered in a 7-segment LED font. The same component services both screens via a `size` prop (`"md"` for homepage, `"lg"` for prelaunch).
+
+- [x] T074 [P14] Self-host **DSEG7-Classic** (OFL) under [public/fonts/dseg7/](../../../public/fonts/dseg7/) (`DSEG7Classic-Regular.woff2` + `LICENSE.txt`); register it via `next/font/local` in [app/layout.tsx](../../../app/layout.tsx) as the `--font-dseg7` CSS variable. Why DSEG7: Figma's "Digital Numbers" font is non-Google-hosted and not OFL; DSEG7-Classic is the closest open-source 7-segment family.
+- [x] T075 [P14] Add LED tile design tokens to [app/globals.css](../../../app/globals.css): `--color-saa-countdown-tile-border` (`#FFEA9E`), `--color-saa-countdown-digit-fg` (`#FFFFFF`), `--font-led` (mapped to `--font-dseg7`), plus the `.saa-countdown-tile`, `.saa-countdown-tile-md` (51×82, radius 8, border 0.5px, blur 16.64px), and `.saa-countdown-tile-lg` (77×123, radius 12, border 0.75px, blur 24.96px) classes. Each tile uses a `::before` pseudo-element so the white→white-10% gradient + golden border + backdrop-filter render at `opacity: 0.5` without dimming the digit on top.
+- [x] T076 [P14] Refactor [src/components/home/Countdown.tsx](../../../src/components/home/Countdown.tsx): split each two-digit value into a row of two `DigitTile` instances; add `size?: "md" | "lg"` (default `"md"`) and `align?: "start" | "center"` (default `"start"`) props. Default rendering for Homepage SAA (`<Hero />`) is unchanged. Existing unit tests in [tests/unit/components/home/Countdown.test.tsx](../../../tests/unit/components/home/Countdown.test.tsx) keep passing because `tilesFromDom()` reads `previousElementSibling.textContent`, which still concatenates the two digits to the original two-character string.
+- [x] T077 [P14] Wire `size="lg" align="center"` at the prelaunch call site in [src/components/prelaunch/PrelaunchScreen.tsx](../../../src/components/prelaunch/PrelaunchScreen.tsx). Homepage `<Hero />` keeps the default `size="md"` — no edit there.
+- [x] T078 [P14] Refresh design + implementation reference images: [.momorph/specs/i87tDx10uM-homepage-saa/assets/frame.png](assets/frame.png) + `assets/implementation-viewport.png`, and [.momorph/specs/8PJQswPZmU-countdown-prelaunch-page/assets/frame.png](../8PJQswPZmU-countdown-prelaunch-page/assets/frame.png) + `assets/implementation.png`. Visual verification via Playwright `channel: "chrome"` on real Google Chrome (DSEG7 font load gated on `document.fonts.ready`).
+
+**Out of scope for Phase 14**: any change to the per-minute tick, FR-007/FR-008 contracts, the `eventStart` prop signature, the `subtitleAs`/`subtitleKey` props, the `home.hero.countdown.{days,hours,minutes}` i18n keys, or the existing aria-decorative behavior (Q7).
+
+---
+
 ## Notes
 
 - Commit after each logical group: e.g. one commit for Phase 1 (asset prep), one for Phase 2 (foundation), one per user story phase.

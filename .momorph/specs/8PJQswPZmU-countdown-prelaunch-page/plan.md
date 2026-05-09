@@ -108,7 +108,7 @@ Every FR / TR / US in spec.md is mapped below. A developer reading only this pla
 ### Integration Points
 
 - **Existing Services**:
-  - [`Countdown`](../../../src/components/home/Countdown.tsx) — **EXTENDED** with optional `subtitleAs?: "p" | "h1"` (default `"p"`) and optional `subtitleKey?: string` (default `"home.hero.subtitle"`) so the prelaunch route can opt into `<h1>` + `prelaunch.heading` without touching Homepage's render tree. Surgical change; one new Vitest case covers each branch.
+  - [`Countdown`](../../../src/components/home/Countdown.tsx) — **EXTENDED** with optional `subtitleAs?: "p" | "h1"` (default `"p"`) and optional `subtitleKey?: string` (default `"home.hero.subtitle"`) so the prelaunch route can opt into `<h1>` + `prelaunch.heading` without touching Homepage's render tree. Surgical change; one new Vitest case covers each branch. **Phase 8 visual redesign (2026-05-09)** further extends the component with `size?: "md" \| "lg"` (default `"md"`) + `align?: "start" \| "center"` (default `"start"`); the prelaunch call site passes `size="lg" align="center"` so each digit renders inside its own 77×123 glassmorphic LED tile (DSEG7-Classic font, golden border, white→white-10% gradient under `backdrop-filter: blur(24.96px)`). Functional contract is unchanged — see Phase 14 in [.momorph/specs/i87tDx10uM-homepage-saa/tasks.md](../i87tDx10uM-homepage-saa/tasks.md) for the shared component / font / token work.
   - [`getSaaLocale`](../../../src/lib/cookies/saa-locale.ts) — **REUSED** as-is.
   - [`t` / catalogs](../../../src/lib/i18n/index.ts) — **EXTENDED** with `prelaunch.heading` in BOTH `vi-VN` and `en-US`. The catalog parity test enforces lockstep.
   - [`config`](../../../src/lib/config.ts) — **EXTENDED** with `SAA_LAUNCH_AT`.

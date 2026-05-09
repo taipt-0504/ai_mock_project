@@ -31,6 +31,8 @@ export default function PrelaunchScreen({
           locale={locale}
           subtitleAs="h1"
           subtitleKey="prelaunch.heading"
+          size="lg"
+          align="center"
         />
         <PrelaunchAutoExit launchAt={launchAt} />
       </div>

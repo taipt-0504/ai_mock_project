@@ -35,16 +35,76 @@ function pad2(value: number): string {
   return value.toString().padStart(2, "0");
 }
 
+type Size = "md" | "lg";
+
+// LED tile + label sizing tokens. Mirrors `.saa-countdown-tile-{md,lg}` in
+// app/globals.css (Figma 8PJQswPZmU + i87tDx10uM B1.3); kept here only to
+// drive layout/typography pieces Tailwind needs as inline arbitrary values.
+const SIZE_TOKENS: Record<
+  Size,
+  {
+    tile: string; // class for digit tile
+    digitFontSize: string; // DSEG7 font-size (px) — matches Figma exactly
+    digitGap: string; // gap between the two digit tiles (px)
+    label: string; // label typography (Montserrat)
+    columnGap: string; // vertical gap between digit row and label
+    groupGap: string; // horizontal gap between Days/Hours/Minutes groups
+    digitWidthPx: number; // digit text box width (Figma)
+  }
+> = {
+  lg: {
+    tile: "saa-countdown-tile saa-countdown-tile-lg",
+    digitFontSize: "text-[73.728px] leading-[95px]",
+    digitGap: "gap-[21px]",
+    label: "font-display text-4xl font-bold leading-[48px]",
+    columnGap: "gap-6",
+    groupGap: "gap-[60px]",
+    digitWidthPx: 59,
+  },
+  md: {
+    tile: "saa-countdown-tile saa-countdown-tile-md",
+    digitFontSize: "text-[49.152px] leading-[63px]",
+    digitGap: "gap-[14px]",
+    label: "font-display text-2xl font-bold leading-8",
+    columnGap: "gap-[14px]",
+    groupGap: "gap-10",
+    digitWidthPx: 40,
+  },
+};
+
+function DigitTile({ char, size }: { char: string; size: Size }) {
+  const tokens = SIZE_TOKENS[size];
+  return (
+    <div className={tokens.tile}>
+      <span
+        aria-hidden="true"
+        style={{
+          fontFamily: "var(--font-led), monospace",
+          width: tokens.digitWidthPx,
+          textAlign: "center",
+        }}
+        className={`${tokens.digitFontSize} font-normal text-saa-countdown-digit-fg`}
+      >
+        {char}
+      </span>
+    </div>
+  );
+}
+
 export default function Countdown({
   eventStart,
   locale,
   subtitleAs = "p",
   subtitleKey = "home.hero.subtitle",
+  size = "md",
+  align = "start",
 }: {
   eventStart: Date | null;
   locale: SupportedLocale;
   subtitleAs?: "p" | "h1";
   subtitleKey?: string;
+  size?: Size;
+  align?: "start" | "center";
 }) {
   const [now, setNow] = useState<Date>(() => new Date());
 
@@ -66,6 +126,7 @@ export default function Countdown({
   const parts = computeParts(eventStart, now);
   const showSubtitle = !parts || !parts.isInPast;
 
+  const tokens = SIZE_TOKENS[size];
   const tiles: ReadonlyArray<{ label: string; value: string }> = [
     {
       label: t("home.hero.countdown.days", locale),
@@ -81,32 +142,41 @@ export default function Countdown({
     },
   ];
 
+  const alignmentClass = align === "center" ? "items-center" : "items-start";
+  const subtitleAlignClass = align === "center" ? "text-center" : "text-left";
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col ${alignmentClass} ${tokens.columnGap}`}>
       {showSubtitle
         ? createElement(
             subtitleAs,
             {
-              className: "font-display text-2xl font-bold leading-8 text-saa-page-fg",
+              className: `${tokens.label} ${subtitleAlignClass} text-saa-page-fg`,
             },
             t(subtitleKey, locale),
           )
         : null}
-      <div className="flex flex-row items-center gap-10">
-        {tiles.map((tile) => (
-          <div
-            key={tile.label}
-            className="flex flex-col items-start justify-center gap-3.5"
-            style={{ width: 116, height: 128 }}
-          >
-            <div className="flex h-[82px] w-full items-center font-display text-[72px] font-bold leading-[82px] tracking-tight text-saa-page-fg">
-              {tile.value}
+      <div className={`flex flex-row items-center ${tokens.groupGap}`}>
+        {tiles.map((tile) => {
+          const [d1, d2] = [tile.value.charAt(0), tile.value.charAt(1)];
+          return (
+            <div
+              key={tile.label}
+              className={`flex flex-col items-start justify-center ${tokens.columnGap}`}
+            >
+              <div
+                className={`flex flex-row items-center ${tokens.digitGap}`}
+                aria-label={`${tile.value} ${tile.label}`}
+              >
+                <DigitTile char={d1} size={size} />
+                <DigitTile char={d2} size={size} />
+              </div>
+              <span className={`${tokens.label} text-saa-page-fg`}>
+                {tile.label}
+              </span>
             </div>
-            <span className="font-display text-2xl font-bold leading-8 text-saa-page-fg">
-              {tile.label}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

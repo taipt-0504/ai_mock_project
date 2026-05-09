@@ -234,6 +234,23 @@ PR 4 — Phase 7 final (perf check, viewport smoke, full verification).
 
 ---
 
+## Phase 8 — Countdown LED redesign (post-launch visual update, 2026-05-09)
+
+**Goal**: Replace the original Montserrat-72px digit pair with the Figma "Digital Numbers" / 7-segment LED treatment. The same redesign also lands on Homepage SAA — the work is a single change to the shared `<Countdown>` component plus a `size`/`align` prop wiring.
+
+Functional contract (FR-001…FR-013, US1…US4) is **unchanged** — this phase is visual-only and inherits the Phase 14 work tracked in [.momorph/specs/i87tDx10uM-homepage-saa/tasks.md](../i87tDx10uM-homepage-saa/tasks.md). The two relevant prelaunch-side acceptance points:
+
+- The `<Countdown>` invocation in [src/components/prelaunch/PrelaunchScreen.tsx](../../../src/components/prelaunch/PrelaunchScreen.tsx) MUST pass `size="lg" align="center"` so the prelaunch tiles render at 77×123 (radius 12, border 0.75px, blur 24.96px) rather than the homepage default `size="md"` (51×82).
+- The `prelaunch.heading` i18n key continues to render as `<h1>` via `subtitleAs="h1"` (Q-CP5) — the redesign does NOT alter the heading element, only the digit row beneath it.
+
+- [x] T041 [P8] Wire `size="lg" align="center"` in PrelaunchScreen at the `<Countdown>` call site | src/components/prelaunch/PrelaunchScreen.tsx
+- [x] T042 [P8] Refresh `assets/frame.png` (latest Figma export from screenId `8PJQswPZmU`) and `assets/implementation.png` (Playwright capture via `channel: "chrome"`, `document.fonts.ready` gate) | .momorph/specs/8PJQswPZmU-countdown-prelaunch-page/assets/
+- [x] T043 [P8] Cross-reference Phase 14 in the Homepage SAA tasks file for the shared component / font / token work; no further changes scoped to this spec | (cross-link only)
+
+**Out of scope for Phase 8**: `LAUNCH_AT` parsing, redirect / gate behavior, the auto-exit client refresh, the PrelaunchAutoExit minute-tick mechanism, the `prelaunch.heading` copy, and any change to the Login regression suite.
+
+---
+
 ## Notes
 
 - Commit after each task or logical group; keep PRs scoped per the Incremental Delivery split.
