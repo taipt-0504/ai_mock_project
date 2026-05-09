@@ -137,16 +137,16 @@
 
 ### Logic (US3)
 
-- [ ] T029 [P] [US3] Implement `PrelaunchAutoExit` `"use client"` companion: takes `launchAt: Date \| null`, runs `useEffect(() => { … }, [launchAt])` that schedules a one-minute interval; uses `useRef<boolean>` to guarantee `router.refresh()` fires AT MOST once across the lifetime of the mount. Returns `null`. No-op when `launchAt` is null or already past at mount time | src/components/prelaunch/PrelaunchAutoExit.tsx
+- [x] T029 [P] [US3] Implement `PrelaunchAutoExit` `"use client"` companion: takes `launchAt: Date \| null`, runs `useEffect(() => { … }, [launchAt])` that schedules a one-minute interval; uses `useRef<boolean>` to guarantee `router.refresh()` fires AT MOST once across the lifetime of the mount. Returns `null`. No-op when `launchAt` is null or already past at mount time | src/components/prelaunch/PrelaunchAutoExit.tsx
 
 ### UI (US3)
 
-- [ ] T030 [US3] Mount `<PrelaunchAutoExit launchAt={launchAt} />` inside `PrelaunchScreen` (after the Countdown). Idempotent — render is unchanged when launchAt is null/already-past | src/components/prelaunch/PrelaunchScreen.tsx (modify; created in T016)
+- [x] T030 [US3] Mount `<PrelaunchAutoExit launchAt={launchAt} />` inside `PrelaunchScreen` (after the Countdown). Idempotent — render is unchanged when launchAt is null/already-past. **Note (2026-05-09)**: existing `PrelaunchScreen.test.tsx` was extended with a `vi.mock("next/navigation", ...)` block because the new child calls `useRouter()` — without the mock, the existing render tests crash on missing router context | src/components/prelaunch/PrelaunchScreen.tsx (modify; created in T016) + tests/unit/components/prelaunch/PrelaunchScreen.test.tsx (mock useRouter)
 
 ### Tests (US3)
 
-- [ ] T031 [P] [US3] Vitest with `vi.useFakeTimers()`: mock `useRouter()`, mount `<PrelaunchAutoExit launchAt={now + 30s} />`, advance timers > 30s + one tick, assert `router.refresh` called exactly once. Advance further → still called only once (the `useRef` guard) | tests/unit/components/prelaunch/PrelaunchAutoExit.test.tsx
-- [ ] T032 [US3] Playwright `gate-disabled.spec.ts`: launch with `SAA_LAUNCH_AT=<past ISO>`. (a) GET `/coming-soon` (no redirects) → 307, `Location: /`. (b) Anonymous full-redirect chain `/coming-soon` → `/` → `/login`. (c) With seeded session cookie → `/coming-soon` → `/` → Homepage 200. (d) GET `/login`, `/awards` → normal handlers respond, no proxy redirect | tests/e2e/prelaunch/gate-disabled.spec.ts
+- [x] T031 [P] [US3] Vitest with `vi.useFakeTimers()`: mock `useRouter()`, mount `<PrelaunchAutoExit launchAt={now + 30s} />`, advance timers > 30s + one tick, assert `router.refresh` called exactly once. Advance further → still called only once (the `useRef` guard). 5 cases: refresh-once-then-no-double-fire, null no-op, past-at-mount no-op, still-future no-refresh-yet, returns-null DOM check | tests/unit/components/prelaunch/PrelaunchAutoExit.test.tsx
+- [x] T032 [US3] Playwright `gate-disabled.spec.ts`: launch with `SAA_LAUNCH_AT=<past ISO>`. (a) GET `/coming-soon` (no redirects) → 307, `Location: /`. (b) Anonymous full-redirect chain `/coming-soon` → `/` → `/login`. (c) With seeded session cookie → `/coming-soon` → `/` → Homepage 200. (d) GET `/login`, `/awards` → normal handlers respond, no proxy redirect (asserted as "Location not /coming-soon" so /awards' own auth gate is not conflated with the prelaunch gate). DB-using authenticated case lives in its own `describe` so it does NOT block the anonymous suite when `DATABASE_URL_TEST` is unset | tests/e2e/prelaunch/gate-disabled.spec.ts
 
 **Checkpoint**: Both gate states behave correctly end-to-end. The handoff at the zero boundary is verifiable in Vitest; the visitor-observable outcome is verified in Playwright.
 

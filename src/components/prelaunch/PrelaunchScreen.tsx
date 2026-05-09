@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import Countdown from "@/src/components/home/Countdown";
+import PrelaunchAutoExit from "@/src/components/prelaunch/PrelaunchAutoExit";
 import type { SupportedLocale } from "@/src/lib/i18n/types";
 
 export default function PrelaunchScreen({
@@ -31,6 +32,7 @@ export default function PrelaunchScreen({
           subtitleAs="h1"
           subtitleKey="prelaunch.heading"
         />
+        <PrelaunchAutoExit launchAt={launchAt} />
       </div>
     </main>
   );

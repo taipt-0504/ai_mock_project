@@ -1,6 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const { refreshMock } = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: refreshMock }),
+}));
+
 import PrelaunchScreen from "@/src/components/prelaunch/PrelaunchScreen";
 import viCatalog from "@/src/lib/i18n/catalogs/vi-VN.json";
 
