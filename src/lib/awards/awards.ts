@@ -22,6 +22,10 @@ export type Award = {
   readonly labelAsset: string;
   readonly labelWidth: number;
   readonly labelHeight: number;
+  readonly quantity: number;
+  readonly unitKey: string | null;
+  readonly valueVND: number;
+  readonly valueVNDSecondary: number | null;
 };
 
 export const AWARDS: ReadonlyArray<Award> = [
@@ -33,6 +37,10 @@ export const AWARDS: ReadonlyArray<Award> = [
     labelAsset: "/assets/home/images/award-top-talent.png",
     labelWidth: 222,
     labelHeight: 36,
+    quantity: 10,
+    unitKey: "awards.detail.unit.don_vi",
+    valueVND: 7_000_000,
+    valueVNDSecondary: null,
   },
   {
     id: "top-project",
@@ -42,6 +50,10 @@ export const AWARDS: ReadonlyArray<Award> = [
     labelAsset: "/assets/home/images/award-top-project.png",
     labelWidth: 232,
     labelHeight: 35,
+    quantity: 2,
+    unitKey: "awards.detail.unit.tap_the",
+    valueVND: 15_000_000,
+    valueVNDSecondary: null,
   },
   {
     id: "top-project-leader",
@@ -51,6 +63,10 @@ export const AWARDS: ReadonlyArray<Award> = [
     labelAsset: "/assets/home/images/award-top-project-leader.png",
     labelWidth: 232,
     labelHeight: 64,
+    quantity: 3,
+    unitKey: "awards.detail.unit.ca_nhan",
+    valueVND: 7_000_000,
+    valueVNDSecondary: null,
   },
   {
     id: "best-manager",
@@ -60,6 +76,10 @@ export const AWARDS: ReadonlyArray<Award> = [
     labelAsset: "/assets/home/images/award-best-manager.png",
     labelWidth: 232,
     labelHeight: 30,
+    quantity: 1,
+    unitKey: "awards.detail.unit.ca_nhan",
+    valueVND: 10_000_000,
+    valueVNDSecondary: null,
   },
   {
     id: "signature-2025-creator",
@@ -69,6 +89,10 @@ export const AWARDS: ReadonlyArray<Award> = [
     labelAsset: "/assets/home/images/award-signature-2025-creator.png",
     labelWidth: 232,
     labelHeight: 54,
+    quantity: 1,
+    unitKey: null,
+    valueVND: 5_000_000,
+    valueVNDSecondary: 8_000_000,
   },
   {
     id: "mvp",
@@ -78,6 +102,10 @@ export const AWARDS: ReadonlyArray<Award> = [
     labelAsset: "/assets/home/images/award-mvp.png",
     labelWidth: 116,
     labelHeight: 52,
+    quantity: 1,
+    unitKey: null,
+    valueVND: 15_000_000,
+    valueVNDSecondary: null,
   },
 ] as const;
 
