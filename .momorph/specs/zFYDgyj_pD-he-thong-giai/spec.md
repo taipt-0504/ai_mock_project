@@ -286,9 +286,9 @@ here:
   TR-003).
 - **FR-006**: System MUST accept `#<award-slug>` deep-links from Homepage award cards. On
   arrival, the matching detail card MUST be scrolled into view and the matching menu item MUST
-  be marked active. Slugs MUST match the values defined in
+  be marked active. Slugs MUST match the existing `AwardSlug` union exported from
   [src/lib/awards/awards.ts](../../../src/lib/awards/awards.ts): `top-talent`, `top-project`,
-  `top-project-leader`, `best-manager`, `signature-2025`, `mvp`.
+  `top-project-leader`, `best-manager`, `signature-2025-creator`, `mvp`.
 - **FR-007**: System MUST gracefully degrade for unknown / missing fragment hashes: render
   the page with no card pre-scrolled, default to `C.1` Top Talent active, and emit no
   JavaScript error (covers test case ID-13).
@@ -708,10 +708,10 @@ Display Elements:
   / "Signature 2025 — Creator" / "MVP".
 
 Function & Logic:
-- Click: Scrolls to the matching `D.x` card via anchor `#<award-slug>` (slugs in
-  [src/lib/awards/awards.ts](../../../src/lib/awards/awards.ts): `top-talent`, `top-project`,
-  `top-project-leader`, `best-manager`, `signature-2025`, `mvp`); sets the clicked item's
-  active state and clears the previously active item.
+- Click: Scrolls to the matching `D.x` card via anchor `#<award-slug>` (slugs from
+  `AwardSlug` in [src/lib/awards/awards.ts](../../../src/lib/awards/awards.ts):
+  `top-talent`, `top-project`, `top-project-leader`, `best-manager`, `signature-2025-creator`,
+  `mvp`); sets the clicked item's active state and clears the previously active item.
 - Hover: Item shows hover affordance without changing the active state.
 - Keyboard: Each item is a focusable anchor (`<a href="#<slug>">`); pressing Enter triggers
   the same scroll behavior as click.
