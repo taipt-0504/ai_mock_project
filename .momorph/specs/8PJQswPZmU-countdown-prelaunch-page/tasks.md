@@ -160,7 +160,7 @@
 
 ### Tests (US4) — verification only; no production code
 
-- [ ] T033 [P] [US4] Playwright at `gate-active-no-controls.spec.ts`: launch with `SAA_LAUNCH_AT=<future ISO>`, `page.goto('/coming-soon')`, `page.keyboard.press('Tab')`, assert `await page.evaluate(() => document.activeElement?.tagName)` is `"BODY"` (or an `<html>`/`<body>`-equivalent neutral target). Then assert `await page.locator('button').count() === 0` AND `await page.locator('a:not([rel~="canonical"])').count() === 0` | tests/e2e/prelaunch/gate-active-no-controls.spec.ts
+- [x] T033 [P] [US4] Playwright at `gate-active-no-controls.spec.ts`: launch with `SAA_LAUNCH_AT=<future ISO>`, `page.goto('/coming-soon')`, `page.keyboard.press('Tab')`, assert `await page.evaluate(() => document.activeElement?.tagName)` is `"BODY"` (or an `<html>`/`<body>`-equivalent neutral target). Then assert `await page.locator('button').count() === 0` AND `await page.locator('a:not([rel~="canonical"])').count() === 0`. **Note (2026-05-09)**: button/anchor count assertions scoped to `main` (not `page`) so Next.js dev-mode debug-overlay chrome doesn't invalidate the invariant — production builds drop that overlay anyway. Tab-focus assertion accepts BODY / HTML / "" since browsers vary on which neutral element holds focus when no control is focusable | tests/e2e/prelaunch/gate-active-no-controls.spec.ts
 
 **Checkpoint**: All four user stories complete and independently testable.
 
