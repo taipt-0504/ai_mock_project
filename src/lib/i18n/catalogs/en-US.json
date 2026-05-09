@@ -52,6 +52,16 @@
   "home.awards.mvp.title": "MVP (Most Valuable Person)",
   "home.awards.mvp.description": "Most Valuable Player — the contributor who created lasting, meaningful value for Sun* this year.",
 
+  "awards.detail.title_caption": "Sun* annual awards 2025",
+  "awards.detail.title_heading": "SAA 2025 Awards System",
+  "awards.detail.quantity_label": "Number of awards:",
+  "awards.detail.value_label": "Award value:",
+  "awards.detail.unit.don_vi": "units",
+  "awards.detail.unit.tap_the": "team(s)",
+  "awards.detail.unit.ca_nhan": "individual(s)",
+  "awards.detail.value_individual": "individual",
+  "awards.detail.value_team": "team",
+
   "home.kudos.label": "Recognition Movement",
   "home.kudos.title": "Sun* Kudos",
   "home.kudos.description": "WHAT'S NEW IN SAA 2025\nA company-wide recognition movement — the first of its kind, open to every Sunner. Launching in November 2025, the system invites Sun* people to share thanks and appreciation with colleagues. These messages will inform the Heads Council as they select this year's award recipients.",
