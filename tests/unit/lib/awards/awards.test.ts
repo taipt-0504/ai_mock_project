@@ -64,4 +64,51 @@ describe("AWARDS static config", () => {
       );
     }
   });
+
+  it("ships a positive quantity for every entry", () => {
+    for (const award of AWARDS) {
+      expect(award.quantity, `quantity for ${award.slug}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("ships a positive primary VNĐ value for every entry", () => {
+    for (const award of AWARDS) {
+      expect(award.valueVND, `valueVND for ${award.slug}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("uses unitKey === null XOR a non-empty key under awards.detail.unit.*", () => {
+    for (const award of AWARDS) {
+      if (award.unitKey === null) {
+        expect(award.unitKey).toBeNull();
+      } else {
+        expect(award.unitKey, `unitKey for ${award.slug}`).toMatch(
+          /^awards\.detail\.unit\..+/,
+        );
+      }
+    }
+  });
+
+  it("references unitKeys that resolve in BOTH vi-VN and en-US catalogs", () => {
+    const vi = viVN as Record<string, string>;
+    const en = enUS as Record<string, string>;
+    for (const award of AWARDS) {
+      if (award.unitKey === null) continue;
+      expect(vi[award.unitKey], `vi-VN/${award.unitKey}`).toMatch(/\S/);
+      expect(en[award.unitKey], `en-US/${award.unitKey}`).toMatch(/\S/);
+    }
+  });
+
+  it("provides valueVNDSecondary only for signature-2025-creator (and matches 8_000_000)", () => {
+    for (const award of AWARDS) {
+      if (award.slug === "signature-2025-creator") {
+        expect(award.valueVNDSecondary).toBe(8_000_000);
+      } else {
+        expect(
+          award.valueVNDSecondary,
+          `valueVNDSecondary for ${award.slug}`,
+        ).toBeNull();
+      }
+    }
+  });
 });
