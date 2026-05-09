@@ -35,6 +35,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Opt-in for shared/committed env files. Personal overrides still go in
+# `.env.local` / `.env.test.local`, which stay ignored.
+!.env.example
+!.env.test
 
 # vercel
 .vercel
