@@ -1,12 +1,12 @@
 # SAA 2025 — Screen Flow
 
 **File Key**: `9ypp4enmFmdK3YAFJLIu6C`
-**Last updated**: 2026-05-08
+**Last updated**: 2026-05-09
 **Status**: Partial — Login + Dropdown — Language + Homepage SAA + Dropdown — Profile (user)
-+ Countdown - Prelaunch page surveyed in depth. Other entries are inferred from cross-references
-and MUST be re-confirmed when each owning screen is surveyed with `/momorph.screenflow`. The
-authoritative screen-flow document is `.momorph/SCREENFLOW.md`; this file is the lightweight
-index.
++ Countdown - Prelaunch page + Hệ thống giải / Awards Information surveyed in depth. Other
+entries are inferred from cross-references and MUST be re-confirmed when each owning screen is
+surveyed with `/momorph.screenflow`. The authoritative screen-flow document is
+`.momorph/SCREENFLOW.md`; this file is the lightweight index.
 
 ---
 
@@ -37,6 +37,7 @@ index.
 | `T3e_iS9PCL` | Error page — 403 | `/403` (proposed) | ⚠ pending | "Back" → Login (inferred on auth failure). |
 | `8HGlvYGJWq` | [iOS] Login | (mobile variant) | ⚠ pending | Decide responsive single-route vs. separate route. |
 | `8PJQswPZmU` | Countdown - Prelaunch page | `/` (pre-event variant) or `/coming-soon` — TBD | ✅ 2026-05-08 | Standalone full-bleed countdown (no header/footer/nav). Reuses shipped `Countdown` + SAA root-art BG. No outgoing edges; logical handoff to Homepage SAA when countdown elapses. See `.momorph/SCREENFLOW.md` "Screen Details — Countdown - Prelaunch page". Open: Q-CP1 routing, Q-CP2 auth gating, Q-CP3 granularity, Q-CP4 i18n. |
+| `zFYDgyj_pD` | Hệ thống giải / Awards Information | `/awards` (locked 2026-05-09 per Q-HTG1) | ✅ 2026-05-09 | Read-only catalog of all six SAA 2025 awards. Two-column wide-viewport layout: sticky `C` Menu list + vertical `D.1`–`D.6` info cards (scroll-only fallback on narrow viewports per Q-HTG4). Reuses Homepage `Header`, `Footer`, `KudosBlock`. Anchors `#<award-slug>` deep-links from Homepage award cards. Spec at `specs/zFYDgyj_pD-he-thong-giai/spec.md` is **Ready for `momorph.plan`** — all 5 Q-HTG open questions resolved 2026-05-09 (route `/awards`, IntersectionObserver, static catalog, scroll-only mobile fallback, scroll-margin-top at impl time). |
 
 ---
 
@@ -92,3 +93,7 @@ Login (/login)
   it for `/momorph.specify`: routing strategy (inline `/` variant vs. dedicated `/coming-soon`
   path), anonymous-vs-authenticated gating, minute-vs-second granularity, and i18n behavior of
   the `DAYS` / `HOURS` / `MINUTES` Latin labels.
+- ✅ **Q-HTG1..Q-HTG5 resolved (2026-05-09)** for **Hệ thống giải** (`zFYDgyj_pD`): route =
+  `/awards`, active-section = `IntersectionObserver`, data source = static catalog,
+  mobile = scroll-only fallback at MVP, scroll-margin-top resolved at implementation
+  time. Spec is now **Ready for `momorph.plan`**. See spec.md § Resolved Decisions.

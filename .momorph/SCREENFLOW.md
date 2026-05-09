@@ -5,7 +5,7 @@
 - **Figma File Key**: 9ypp4enmFmdK3YAFJLIu6C
 - **Figma URL**: https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C
 - **Created**: 2026-05-07
-- **Last Updated**: 2026-05-08 (Countdown - Prelaunch page `8PJQswPZmU` open-question batch resolved — env var finalized as `SAA_LAUNCH_AT`, route finalized as `/coming-soon`, whitelist finalized to exclude all Auth.js routes; spec ready for `momorph.plan`)
+- **Last Updated**: 2026-05-09 (Hệ thống giải `zFYDgyj_pD` surveyed + spec written + all 5 open questions Q-HTG1..Q-HTG5 resolved — confirmed as the **Awards Information** destination page already referenced from Homepage `A1.3` / `B3.1` / award cards `C2.1`–`C2.6`; spec at `specs/zFYDgyj_pD-he-thong-giai/spec.md` is **Ready for `momorph.plan`** with route locked to `/awards`, data source = static catalog, active-section detection via `IntersectionObserver`, mobile pattern deferred post-MVP)
 
 > ### Global Pre-launch Gate — read this first
 >
@@ -51,11 +51,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Screens (known) | 8 |
+| Total Screens (known) | 9 |
 | Reusable Components (overlays) | 3 |
-| Surveyed in depth | 5 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user, Countdown - Prelaunch page) |
+| Surveyed in depth | 6 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user, Countdown - Prelaunch page, Hệ thống giải) |
 | Remaining | 3 |
-| Completion | ~63% |
+| Completion | ~67% |
 
 ---
 
@@ -68,6 +68,7 @@
 | 3 | Error page — 403 | `T3e_iS9PCL` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=T3e_iS9PCL | pending | — | — | Login (inferred) |
 | 4 | [iOS] Login | `8HGlvYGJWq` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=8HGlvYGJWq | pending | — | (same as Login) | (same as Login) |
 | 5 | Countdown - Prelaunch page | `8PJQswPZmU` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=8PJQswPZmU | surveyed (2026-05-08, re-architected as **global pre-launch gate** same day; open questions Q-CP1..Q-CP5 + Q-PG1..Q-PG5 all resolved 2026-05-08 — route `/coming-soon`, env `SAA_LAUNCH_AT`) | — (no calls; countdown driven by NEW env var `SAA_LAUNCH_AT`, distinct from `SAA_EVENT_START_AT` which Homepage `B1` continues to use) | none in-screen — `now() >= SAA_LAUNCH_AT` lifts the proxy gate; all routes resume normal flow (anon → `/login` per Homepage US0, authed → Homepage SAA) |
+| 6 | Hệ thống giải (Awards Information) | `zFYDgyj_pD` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=zFYDgyj_pD | surveyed (2026-05-09); spec **Ready for `momorph.plan`** (Q-HTG1..Q-HTG5 all resolved 2026-05-09 — route `/awards`, data = static catalog, IntersectionObserver, mobile = scroll-only fallback at MVP) | `specs/zFYDgyj_pD-he-thong-giai/spec.md` | No new endpoints (resolved per Q-HTG3). Reuses `auth()`, `GET /api/notifications/unread-count`, `POST /api/i18n/locale`, `signOutAction`. Read-only display screen. | Sun* Kudos detail (`/sun-kudos`) via `D2.1` `Chi tiết` button; Homepage SAA via header `A1.1` Logo / `A1.2` About SAA 2025 (inferred); Dropdown — Language (overlay); Dropdown — Profile user/admin (overlay) |
 
 ### Reusable Components (Overlays — not routes)
 
@@ -426,6 +427,81 @@ the Sun* Kudos campaign. Acts as the primary navigation hub once the user is aut
 
 ---
 
+## Screen Details — Hệ thống giải / Awards Information (`zFYDgyj_pD`)
+
+**Type**: Authenticated-only route. Anonymous visitors are redirected to `/login` consistent with Homepage US0 / spec FR-001a (every authenticated route follows the same gate). Currently a stub at [app/awards/page.tsx](app/awards/page.tsx) (shipped 2026-05-08 as part of the Homepage hydration-bug workaround) — this survey backs the stub with a real spec.
+
+**Purpose**: Detail catalog for the SAA 2025 award system. Lists all six award categories with full description, **quantity**, and **monetary value** so participants understand what they can win and why. Anchor for the `#<award-slug>` deep-links emitted from Homepage `A1.3` `Awards Information`, `B3.1` ABOUT AWARDS CTA, footer `7.3`, and the six award cards `C2.1`–`C2.6`.
+
+**Top-level structure** (from Figma frame `313:8436`):
+
+| Section | Frame ID | Notes |
+|---------|----------|-------|
+| `Header` | `313:8440` (instance of `186:1602`) | Reuses the shared authenticated `Header`: Logo + nav links + Notification bell + Language chip + Profile avatar. Identical contract to Homepage `A1`. |
+| `3_Keyvisual` | `313:8437` | Hero key art (decorative `image 20`). |
+| `A` Title hệ thống giải thưởng | `313:8453` | Caption "Sun* annual awards 2025" + H1 "Hệ thống giải thưởng SAA 2025" — static label, not interactive. |
+| `B` Hệ thống giải thưởng | `313:8458` | Two-column section: left = sticky navigation menu `C`, right = vertical list of award detail cards `D.1`–`D.6`. |
+| `C` Menu list | `313:8459` | Sticky/anchored navigation column with 6 items: `C.1` Top Talent, `C.2` Top Project, `C.3` Top Project Leader, `C.4` Best Manager, `C.5` Signature 2025 — Creator, `C.6` MVP. The currently-visible award card is highlighted (yellow text + underline). |
+| `D` Danh sách giải thưởng | `313:8466` | Vertical list of six award info-blocks: `D.1` Top Talent (`313:8467`), `D.2` Top Project (`313:8468`), `D.3` Top Project Leader (`313:8469`), `D.4` Best Manager (`313:8470` — labeled `D.4_Thông tin giải`), `D.5` Signature 2025 (`313:8471`), `D.6` MVP (`313:8510`). Each is a read-only info-block: thumbnail (`Picture-Award`, 336×336) + title + description + "Số lượng giải thưởng" + "Giá trị giải thưởng". |
+| `D1` Sun* Kudos block | `335:12023` | Same promo block component (`335:11943`) used on Homepage `D1` — label "Phong trào ghi nhận", title "Sun* Kudos", description, illustration, `D2.1` `Chi tiết` button → `/sun-kudos`. |
+| `Footer` | `354:4323` (instance of `342:1427`) | Same Footer as Homepage `7`: Logo + 4 nav links + copyright. |
+
+**Award catalog data** (display-only; mirrors / extends `src/lib/awards/awards.ts`):
+
+| # | slug | Title | Quantity | Unit | Value (per giải) |
+|---|------|-------|----------|------|-------------------|
+| `D.1` | `top-talent` | Top Talent | 10 | Đơn vị | 7.000.000 VNĐ |
+| `D.2` | `top-project` | Top Project | 02 | Tập thể | 15.000.000 VNĐ |
+| `D.3` | `top-project-leader` | Top Project Leader | 03 | Cá nhân | 7.000.000 VNĐ |
+| `D.4` | `best-manager` | Best Manager | 01 | Cá nhân | 10.000.000 VNĐ |
+| `D.5` | `signature-2025` | Signature 2025 — Creator | 01 | — | 5.000.000 VNĐ (cá nhân) / 8.000.000 VNĐ (tập thể) |
+| `D.6` | `mvp` | MVP (Most Valuable Person) | 01 | — | 15.000.000 VNĐ |
+
+**Outgoing navigation edges**:
+- `Header` (Logo / About SAA 2025 / Awards Information / Sun* Kudos / Notification / Language / Profile) — same contract as Homepage `A1`. `Awards Information` is the active/selected nav item on this screen (selected state).
+- `C.1`–`C.6` menu items → in-page scroll/anchor to the corresponding `D.*` card; sets the active state on the clicked menu item (yellow + underline) and clears the previous one.
+- `D2.1` `Chi tiết` (Sun* Kudos block button) → `/sun-kudos` (Sun* Kudos detail page).
+- `Footer` (Logo / 4 nav links) — same contract as Homepage `7`.
+- No outgoing edges from `D.1`–`D.6` info cards themselves (read-only).
+
+**Incoming navigation edges**:
+- Header `A1.3 Awards Information` from Homepage SAA / any header-bearing screen.
+- Footer `7.3 Awards Information` from any page with the shared footer.
+- `B3.1 ABOUT AWARDS` CTA on Homepage `B3` (yellow filled button).
+- Six award cards `C2.1`–`C2.6` on Homepage with `#<award-slug>` hash → arrives on this screen scrolled to the matching `D.*` card.
+- Direct visit to `/awards` (per Homepage spec) **OR** `/he-thong-giai` (per test cases ID-0..ID-2) — see open question Q-HTG1.
+
+**Predicted APIs**:
+- `GET /api/awards` — list of 6 award categories (id, slug, title, description, quantity, unit, value, thumbnail). May be served from the static catalog at MVP per Homepage Q-H2.
+- `GET /api/notifications/unread-count` — header bell badge (already shipped via Homepage Phase 13).
+- `POST /api/i18n/locale` — already shipped; reused by header language chip via `LanguageSelector`.
+- `POST /api/auth/signout` (Server Action `signOutAction`) — already shipped; reused by Profile dropdown.
+- No write/mutation endpoint specific to this screen — display-only.
+
+**Reused / shared components** (do NOT rebuild):
+- `Header` ([src/components/header/Header.tsx](src/components/header/Header.tsx)) — already extended with nav / notification / profileMenu / logoHref slots in Homepage Phase 13. The "About SAA 2025" / "Awards Information" / "Sun* Kudos" nav links pass `selected="awards"` to mark this screen.
+- `Footer` ([src/components/home/Footer.tsx](src/components/home/Footer.tsx)) — shipped with Homepage; reused unchanged.
+- `LanguageSelector`, `NotificationBell`, `ProfileButton`, `Logo`, `WidgetButton` — all reused unchanged from Homepage.
+- `KudosBlock` ([src/components/home/KudosBlock.tsx](src/components/home/KudosBlock.tsx)) — already shipped on Homepage; reused on this screen for the `D1`/`D2` Sun* Kudos block.
+- Static awards catalog at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) — extend with `quantity`, `unit`, `value` fields if not yet present; same six entries already exist with stable slugs.
+- Translation helper [src/lib/i18n/index.ts](src/lib/i18n/index.ts) + per-locale catalogs (`vi-VN`, `en-US`) — extend with `awards.detail.*` keys.
+
+**New components to build** (anticipated, subject to plan phase):
+- `AwardsLayout` (or page-level layout) — two-column responsive container (sticky `AwardsNav` left + `AwardsList` right on desktop; tabs/accordion on mobile per spec FR-XX responsive behavior).
+- `AwardsNav` — vertical list of 6 menu items with active-state indicator (yellow text + underline). Click triggers in-page scroll via anchor / `IntersectionObserver`-driven highlight as the user scrolls.
+- `AwardDetailCard` — info-block: `Picture-Award` (336×336) + title + description + "Số lượng giải thưởng: {n} {unit}" + "Giá trị giải thưởng: {value} VNĐ {note}". Read-only.
+- `AwardsList` — wrapper that renders six `AwardDetailCard` instances and registers them with the active-section observer.
+- The page entry `app/awards/page.tsx` (currently a stub) is **replaced** by the real implementation.
+
+**Resolved decisions** (all 5 closed 2026-05-09):
+- **Q-HTG1 → `/awards`** (canonical). Existing stub at `app/awards/page.tsx` is replaced by the real implementation at the same path. No `/he-thong-giai` alias.
+- **Q-HTG2 → `IntersectionObserver`** for active-section detection (US2 P1 requires scroll-tracked menu; anchor-only is rejected).
+- **Q-HTG3 → Static catalog** at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) extended with `quantity` / `unit` / `valueVND` / `valueVNDSecondary`. No `GET /api/awards` endpoint, no DB schema, no admin UI at MVP.
+- **Q-HTG4 → Scroll-only fallback** for narrow viewports at MVP. Menu hidden on narrow viewports; user scrolls through six cards directly. Structured patterns (tab strip / accordion) deferred post-MVP.
+- **Q-HTG5 → `scroll-margin-top`** on each `D.*` card; exact offset value resolved at implementation time against deployed sticky header height (no pixel value asserted in spec).
+
+---
+
 ## Navigation Graph
 
 ```mermaid
@@ -445,7 +521,7 @@ flowchart TD
 
     subgraph Main["Main Application (post-gate)"]
         Home["Homepage SAA<br/>i87tDx10uM"]
-        Awards["Awards Information<br/>(stub 2026-05-08)"]
+        Awards["Hệ thống giải /<br/>Awards Information<br/>zFYDgyj_pD<br/>(stub 2026-05-08, surveyed 2026-05-09)"]
         Kudos["Sun* Kudos<br/>(stub 2026-05-08)"]
         Standards["Tiêu chuẩn chung<br/>(stub 2026-05-08)"]
     end
@@ -479,6 +555,13 @@ flowchart TD
     Home  -->|ABOUT AWARDS / nav A1.3 / footer 7.3 / award card #slug| Awards
     Home  -->|ABOUT KUDOS / nav A1.5 / footer 7.4 / Sun* Kudos block| Kudos
     Home  -->|footer 7.5| Standards
+
+    Awards -.->|opens overlay (header lang)| DDLang
+    Awards -.->|opens overlay (header profile)| DDUser
+    Awards -.->|opens overlay (header profile admin)| DDAdmin
+    Awards -.->|opens panel (header bell)| NotifPanel
+    Awards -->|D2.1 "Chi tiết" Sun* Kudos block| Kudos
+    Awards -->|header Logo / About SAA 2025 / footer 7.2| Home
 
     DDUser  -->|Logout| Login
     DDAdmin -->|Logout| Login
@@ -520,7 +603,7 @@ flowchart TD
 |--------|---------|--------------|
 | Countdown - Prelaunch page (`8PJQswPZmU`, route **`/coming-soon`** — Q-PG3 resolved) | **Global pre-launch gate.** Standalone full-bleed prelaunch screen (BG art + Days/Hours/Minutes countdown counting down to `SAA_LAUNCH_AT`). While the gate is active, every non-whitelisted route in the app redirects to `/coming-soon` via Next.js `proxy.ts`. Auth-agnostic: anon and authed users both land here, sessions persist. Missing-env behavior: always fail closed (Q-PG2). | (1) Direct visit to `/coming-soon`. (2) **Proxy redirect from every other route** during the prelaunch window — `/`, `/login`, `/awards`, `/sun-kudos`, `/general-rules`, `/profile`, and every API route except the finalized whitelist (`/_next/*`, `/public/*`, favicon, `/coming-soon`, `/api/health` if/when added). All Auth.js paths `/api/auth/*` are deliberately NOT whitelisted (Q-PG4 resolved) and redirect to `/coming-soon`. |
 | Homepage SAA (`i87tDx10uM`) | Post-auth landing — hero / countdown / award catalog / Sun* Kudos promo / footer | Login success, direct visit while authenticated, Logo / `About SAA 2025` link from any other page |
-| Awards Information (stub 2026-05-08) | Per-award detail content; deep-links to `#<award-slug>`. Stub at [app/awards/page.tsx](app/awards/page.tsx) — placeholder pending real implementation. | Header `Awards Information`, footer link, `ABOUT AWARDS` CTA, any award card on Homepage |
+| Hệ thống giải / Awards Information (`zFYDgyj_pD`, route `/awards` — Q-HTG1 pending) | **Surveyed 2026-05-09.** Read-only catalog of all six SAA 2025 award categories with description, quantity, and monetary value. Two-column desktop layout: sticky `C` Menu list left + vertical `D.1`–`D.6` cards right. Reuses `Header`, `Footer`, `KudosBlock`. Deep-links from Homepage award cards (`#<award-slug>`) anchor to the matching `D.*` card. Currently a stub at [app/awards/page.tsx](app/awards/page.tsx); full spec at [specs/zFYDgyj_pD-he-thong-giai/spec.md](specs/zFYDgyj_pD-he-thong-giai/spec.md). | Header `A1.3` `Awards Information`, footer `7.3` link, `B3.1` `ABOUT AWARDS` CTA, any award card `C2.1`–`C2.6` on Homepage with `#<award-slug>` |
 | Sun* Kudos (stub 2026-05-08) | Sun* Kudos campaign detail. Stub at [app/sun-kudos/page.tsx](app/sun-kudos/page.tsx) — placeholder pending real implementation. | Header `Sun* Kudos`, footer link, `ABOUT KUDOS` CTA, Sun* Kudos block `Chi tiết` |
 | Tiêu chuẩn chung (stub 2026-05-08) | Shared standards / criteria page. Stub at [app/general-rules/page.tsx](app/general-rules/page.tsx) — placeholder pending real implementation. | Footer `7.5` |
 | Profile (stub 2026-05-08) | User profile destination. Stub at [app/profile/page.tsx](app/profile/page.tsx) — placeholder pending Profile spec survey. | Profile dropdown `A.1` Hồ sơ |
@@ -549,7 +632,7 @@ flowchart TD
 | `/api/i18n/locale` | POST | Dropdown — Language (host: any auth screen) | Persist locale for authenticated user (writes `User.locale` + mirrors `saa_locale` cookie). Returns 401 unauthenticated, 400 on invalid body, 204 on success. |
 | `/api/users/me` | GET | Homepage SAA (predicted) | Load profile (avatar, role, locale) for header on first paint |
 | `/api/event/config` | GET | Homepage SAA — Countdown `B1` (predicted) | Event start datetime (ISO-8601) for countdown computation. May be replaced by env var. |
-| `/api/awards` | GET | Homepage SAA — Award list `C2` (predicted) | List of 6 award categories (slug, title, short description, thumbnail). May be a static catalog at MVP. |
+| `/api/awards` | GET | Homepage SAA — Award list `C2` (predicted), Hệ thống giải — `D.1`–`D.6` (predicted) | List of 6 award categories (slug, title, description, quantity, unit, value, thumbnail). May be a static catalog at MVP per Q-H2 / Q-HTG3. |
 | `/api/notifications` | GET | Homepage SAA — Notification bell `A1.6` (predicted) | Unread count for the bell badge; opens panel on click. |
 | `/api/kudos/summary` | GET | Homepage SAA — Sun* Kudos block `D1` (predicted) | Promo block copy + image. Optional; may be CMS-driven static content at MVP. |
 
@@ -599,6 +682,8 @@ flowchart TD
 | 2026-05-08 | Screen survey (flow only) | Countdown - Prelaunch page (`8PJQswPZmU`) | Mapped Figma frame `2268:35127` (1512×900). Structure: full-bleed `MM_MEDIA_BG Image` (`2268:35129`) + dark `Cover` overlay (`2268:35130`) + centered `Bìa` container (`2268:35131`) holding heading "Sự kiện sẽ bắt đầu sau" (`2268:35137`, Montserrat 700/36px) and a `Time` row (`2268:35138`) of three units: `1_Days` / `2_Hours` / `3_Minutes` (each = two glass-blur digit tiles, instances of component `186:2619`, with `Digital Numbers` 73.7px digits and a `DAYS` / `HOURS` / `MINUTES` Latin label below). No header, footer, nav, or interactive controls; no outgoing edges; the only edge is the logical "countdown elapsed → Homepage SAA" handoff. Predicted APIs: **none** — same env-driven datetime as Homepage `B1` (`SAA_EVENT_START_AT` via [src/lib/event/event-config.ts](src/lib/event/event-config.ts)). Reuses shipped `Countdown` component ([src/components/home/Countdown.tsx](src/components/home/Countdown.tsx)) and the SAA root-art BG asset family. Open questions Q-CP1..Q-CP4 logged (routing — inline `/` variant vs. dedicated path; auth gating; minute vs. seconds granularity; i18n of labels). No spec/plan written per skill instruction "do not create a feature spec — only update SCREENFLOW.md". |
 | 2026-05-08 | **Prelaunch spec — open questions resolved** | Countdown - Prelaunch page (`8PJQswPZmU`) | All eight pending open questions on the prelaunch spec resolved in one pass — Q-CP1..Q-CP5 (countdown / page) and Q-PG1..Q-PG5 (gate). Headline choices: env var = **`SAA_LAUNCH_AT`** (Q-PG1, terser/marketing-friendly than verbose earlier-discussed alternatives); missing-env behavior = **always fail closed** in every `NODE_ENV` (Q-PG2 — every environment MUST set the env explicitly, past timestamp = gate disabled, future = active); route path = **`/coming-soon`** (Q-PG3, new file `app/coming-soon/page.tsx`); whitelist (Q-PG4) = `/_next/*`, `/public/*`, favicon, `/coming-soon`, `/api/health` if/when added — **all Auth.js routes `/api/auth/*` (`callback`, `csrf`, `session`, `signin`, `signout`) are deliberately NOT whitelisted**, they redirect to `/coming-soon` like any other route; post-gate redirect = always `/coming-soon` → `/` (Q-PG5, Homepage US0 owns anon-vs-authed branching); granularity = minute-only forever (Q-CP3, no seconds tile); i18n = NEW dedicated key `prelaunch.heading` updated in lockstep across `vi-VN` and `en-US` catalogs, parity test enforces (Q-CP4 — NOT reusing `home.hero.subtitle`); heading element = extend existing `Countdown` component with optional `subtitleAs?: "p" \| "h1"` prop (default `"p"`), prelaunch route mounts `<Countdown subtitleAs="h1" subtitleKey="prelaunch.heading" />` (Q-CP5). Spec status: **Ready for `momorph.plan`** ([specs/8PJQswPZmU-countdown-prelaunch-page/spec.md](specs/8PJQswPZmU-countdown-prelaunch-page/spec.md) § Resolved Decisions has the full FR/TR anchor matrix). No code shipped this entry; SCREENFLOW.md synced — no other screen sections touched. |
 | 2026-05-08 | **Architecture revision — global pre-launch gate** | Countdown - Prelaunch page (`8PJQswPZmU`) + cross-screen | Prelaunch's role fundamentally revised: no longer a `/` inline variant or optional surface — it is now a **global pre-launch gate** enforced by Next.js `proxy.ts`. While `now() < SAA_LAUNCH_AT` (NEW env var, distinct from `SAA_EVENT_START_AT`), every non-whitelisted route (`/`, `/login`, `/awards`, `/sun-kudos`, `/general-rules`, `/profile`, every API route) redirects to the prelaunch screen. Whitelist: `/_next/*`, `/public/*`, prelaunch route itself, diagnostic endpoints (e.g. `/api/health` if present); OAuth callback path handling pending Q-PG4. Auth-agnostic during gate: anon AND authed users land on prelaunch; sessions are NOT invalidated. Post-prelaunch handoff: visiting prelaunch route redirects to `/`; Homepage US0 takes over (anon → `/login`, authed → render Homepage); other routes resume normal behavior. Two countdowns now exist independently: Homepage `B1` continues to count down to `SAA_EVENT_START_AT`; prelaunch counts down to `SAA_LAUNCH_AT`. Logically `SAA_LAUNCH_AT <= SAA_EVENT_START_AT` but not enforced in code. **Q-CP1 RESOLVED** (dedicated path under global gate); **Q-CP2 RESOLVED** (auth-agnostic). Q-CP3 (granularity) and Q-CP4 (i18n) remain open. **NEW open questions** for the gate architecture: Q-PG1 final env var name, Q-PG2 missing-env behavior (gate-disabled vs. fail-closed; recommend env-aware), Q-PG3 final route path (`/prelaunch` vs `/coming-soon` vs other), Q-PG4 OAuth callback + health endpoint whitelist details, Q-PG5 post-prelaunch redirect target (always `/` vs. honor auth → `/login` directly). Mermaid graph rewritten to add a `Gate` cluster visualizing the universal-entry-point semantics. Cross-screen note added at the top of this document and at the Mermaid graph: every other screen's "Incoming"/"Entry points" line carries an implicit precondition `…AND now() >= SAA_LAUNCH_AT`. Individual screen sections (Login, Homepage SAA, Awards, Sun* Kudos, Profile, dropdowns) are NOT individually rewritten — the global note covers them. Spec rewrite for prelaunch (`specs/8PJQswPZmU-countdown-prelaunch-page/spec.md`) is the next workflow step and was deliberately deferred from this revision. |
+| 2026-05-09 | **Hệ thống giải open questions resolved** | Hệ thống giải / Awards Information (`zFYDgyj_pD`) | All 5 open questions closed in one pass. **Q-HTG1 → `/awards`** (canonical, existing stub replaced; no `/he-thong-giai` alias). **Q-HTG2 → `IntersectionObserver`** for active-section detection. **Q-HTG3 → Static catalog** at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) extended with `quantity` / `unit` / `valueVND` / `valueVNDSecondary` — no new endpoint, no DB schema. **Q-HTG4 → Scroll-only fallback** at MVP for narrow viewports; structured mobile pattern (tab strip / accordion) deferred post-MVP. **Q-HTG5 → `scroll-margin-top`** on each `D.*` card with offset resolved at implementation time. Spec status flipped from "Draft — pending Q-HTG1..Q-HTG5" → **"Ready for `momorph.plan`"**. spec.md updated: Status header, FRs (FR-005 IO-locked), TRs (TR-001 static-locked, TR-003 IO-locked, TR-004 scroll-margin-locked), API table (removed `GET /api/awards` row + Q-H3 conditional), State Management (cache section simplified), Out of Scope (mobile redesign explicitly deferred), Open Questions section replaced by **Resolved Decisions**, Dependencies checklist (Q-HTG resolved item checked off). No code shipped this entry. |
+| 2026-05-09 | Screen survey + spec | Hệ thống giải / Awards Information (`zFYDgyj_pD`) | Mapped Figma frame `313:8436` (the destination already referenced from Homepage `A1.3`, `B3.1`, footer `7.3`, award cards `C2.1`–`C2.6`). Confirmed two-column structure: sticky `C` Menu list (6 nav items, active state = yellow + underline) + vertical `D.1`–`D.6` info-block cards (read-only thumbnail + title + description + "Số lượng giải thưởng" + "Giá trị giải thưởng"). Reuses Homepage's `Header`, `Footer`, `KudosBlock` components and the static awards catalog at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) (extend with `quantity`, `unit`, `value` fields). New components anticipated: `AwardsLayout`, `AwardsNav`, `AwardDetailCard`, `AwardsList`. The `D1`/`D2.1` Sun* Kudos block at the bottom (`335:12023`) is the same component instance used on Homepage — `D2.1` `Chi tiết` → `/sun-kudos`. Deep-link contract: `#<award-slug>` from Homepage's six award cards lands on the matching `D.*` card. Spec written at [specs/zFYDgyj_pD-he-thong-giai/spec.md](specs/zFYDgyj_pD-he-thong-giai/spec.md) to back the existing stub at [app/awards/page.tsx](app/awards/page.tsx). Open questions Q-HTG1..Q-HTG5: final route path (`/awards` vs test-case `/he-thong-giai`), active-section detection (anchor click vs `IntersectionObserver`), data source for quantity/value (static catalog vs API), mobile menu behavior, and deep-link scroll-margin offset. SCREENFLOW.md screens table, Mermaid graph, Main Application screen group, API table, and contexts/SCREENFLOW.md index synced. |
 | 2026-05-07 | UI implementation | Homepage SAA (`i87tDx10uM`) | Phases 1–13 of [tasks.md](specs/i87tDx10uM-homepage-saa/tasks.md) shipped. Reused existing `Header` (extended with `nav` / `notification` / `profileMenu` / `logoHref` slots — slim variant unchanged for Login regression), `LanguageSelector`, `Logo` (now accepts optional `href`), `auth()`, `getSaaLocale()`. New components under [src/components/home/](src/components/home/): `Hero`, `Countdown`, `EventInfo`, `CTAButtons`, `RootFurtherEssay`, `AwardsSectionHeader`, `AwardCard`, `AwardsGrid`, `KudosBlock`, `NavLinks`, `Footer`, `WidgetButton`, `NotificationBell`, `ProfileButton`. New primitives under [src/components/ui/](src/components/ui/): `toast.ts` + `Toaster.tsx` (in-house, mounted in [app/layout.tsx](app/layout.tsx)). New backend: `app/api/notifications/unread-count/route.ts` → `notification-service` → `notification-repository` (v1 stub `0`). Static config at [src/lib/awards/awards.ts](src/lib/awards/awards.ts) (six entries with stable slugs), env parser at [src/lib/event/event-config.ts](src/lib/event/event-config.ts). Tailwind tokens added: `saa-card-surface/border`, `saa-essay-quote-fg`, `saa-fab-bg/fg`, `saa-footer-bg/fg`, `saa-notification-dot`. ~36 i18n keys added to both vi-VN / en-US in lockstep — parity test green. PQ1 = b: `User.role` deferred; ProfileButton ships with the user-only menu (Profile + Sign out via `<form action="/api/auth/signout" method="post">`). `i18n/index.ts` no longer imports the server-only logger so client islands (`NotificationBell`, `WidgetButton`, `ProfileButton`, `Toaster`) can call `t()` without bundler errors. Build / typecheck / lint all clean. |
 
 ---
@@ -614,7 +699,10 @@ flowchart TD
 - [ ] **Run `momorph.plan` for Countdown - Prelaunch page (`8PJQswPZmU`)** — spec is now resolved ([specs/8PJQswPZmU-countdown-prelaunch-page/spec.md](specs/8PJQswPZmU-countdown-prelaunch-page/spec.md) § Resolved Decisions, status "Ready for `momorph.plan`"). Plan should produce the proxy contract, env-config helper extension to `src/lib/config.ts`, the `/coming-soon` route at `app/coming-soon/page.tsx`, the new `prelaunch.heading` i18n key in both catalogs, the `Countdown.subtitleAs` prop extension, and the CI-matrix updates (gate-active and gate-disabled jobs) per TR-005.
 - [ ] Survey Profile dropdown admin variant (`54rekaCHG1`) — pending `User.role` schema migration (Homepage spec PQ1 = b). Sẽ kế thừa Profile + Sign out, thêm "Admin Dashboard".
 - [ ] Survey trang `/profile` (destination cho item `A.1` của dropdown profile user) — stub placeholder ship 2026-05-08 ([app/profile/page.tsx](app/profile/page.tsx)) làm tạm; spec/implementation thực vẫn pending. Q-DPU1 đảo từ "chấp nhận 404" → "stub" do hydration bug.
-- [ ] Survey Awards Information and Sun* Kudos detail pages once their frame IDs are added to the file index (deep-link target `#<award-slug>` is required for `C2.*` cards).
+- [x] **Survey Awards Information / Hệ thống giải (`zFYDgyj_pD`) — 2026-05-09.** Frame mapped, spec written at [specs/zFYDgyj_pD-he-thong-giai/spec.md](specs/zFYDgyj_pD-he-thong-giai/spec.md).
+- [x] **Resolve Hệ thống giải open questions Q-HTG1..Q-HTG5 (2026-05-09)** — all 5 closed: route = `/awards`, IO active-section detection, static catalog, scroll-only mobile fallback, scroll-margin-top at impl time. Spec ready for plan.
+- [ ] **Run `momorph.plan` for Hệ thống giải (`zFYDgyj_pD`)** — spec is now resolved ([specs/zFYDgyj_pD-he-thong-giai/spec.md](specs/zFYDgyj_pD-he-thong-giai/spec.md) § Resolved Decisions). Plan should produce: extending [src/lib/awards/awards.ts](src/lib/awards/awards.ts) with 4 new fields, real implementation at [app/awards/page.tsx](app/awards/page.tsx) replacing the stub, new components (`AwardsLayout`, `AwardsNav`, `AwardDetailCard`, `AwardsList`), reuse of `Header` / `Footer` / `KudosBlock`, IntersectionObserver client island, and the new `awards.detail.*` i18n keys in both `vi-VN` and `en-US` catalogs.
+- [ ] Survey Sun* Kudos detail page once its frame ID is added to the file index (deep-link target for Homepage `B3.2`, footer `7.4`, Sun* Kudos block `D2.1` Chi tiết, and Hệ thống giải `D2.1` Chi tiết).
 - [ ] Survey Notification panel and Quick-actions Widget overlays (anchored from Homepage `A1.6` and `#6`).
 - [ ] Survey 403 page (`T3e_iS9PCL`) — confirm "Back" target.
 - [ ] Decide responsive vs. separate route for `[iOS] Login` (`8HGlvYGJWq`).
