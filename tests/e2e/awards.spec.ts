@@ -1,15 +1,16 @@
 import { expect, test } from "@playwright/test";
 
+import enCatalog from "@/src/lib/i18n/catalogs/en-US.json";
 import viCatalog from "@/src/lib/i18n/catalogs/vi-VN.json";
 
 import { clearAuthTables, disconnect, seedAuthenticatedUser } from "./fixtures/db";
 
 /**
- * Phase 3 + 4 — Hệ thống giải SAA 2025.
+ * Phases 3 + 4 + 5 — Hệ thống giải SAA 2025.
  *
- * Covers US1 (browse the catalog), US5 (auth gating), and US2 (scroll-tracking
- * left menu — Phase 4). Cross-link / header-parity scenarios (US3 / US4) land
- * in Phase 5.
+ * Covers US1 (browse the catalog), US5 (auth gating), US2 (scroll-tracking
+ * left menu — Phase 4), and US3 + US4 (Sun* Kudos cross-link + Header/Footer
+ * parity — Phase 5).
  */
 
 const CANONICAL_SLUGS = [
@@ -150,15 +151,15 @@ test.describe("Awards page — US1 + US5", () => {
   }) => {
     await signIn(context);
     await page.goto("/awards");
-
-    await page.evaluate(() => {
-      const target = document.getElementById("top-project");
-      target?.scrollIntoView({ block: "start" });
-    });
-
     const menu = page.getByRole("navigation", { name: "Awards categories" });
+    await expect(menu).toBeVisible();
+    await page.waitForLoadState("networkidle");
+
+    await page.locator("article#top-project").scrollIntoViewIfNeeded();
+
     const topProjectLink = menu.getByRole("link", {
       name: viCatalog["home.awards.top_project.title"],
+      exact: true,
     });
     await expect(topProjectLink).toHaveAttribute("aria-current", "true");
   });
@@ -169,16 +170,136 @@ test.describe("Awards page — US1 + US5", () => {
   }) => {
     await signIn(context);
     await page.goto("/awards");
+    const menu = page.getByRole("navigation", { name: "Awards categories" });
+    await expect(menu).toBeVisible();
+    await page.waitForLoadState("networkidle");
 
     await page.evaluate(() => {
       window.history.replaceState(null, "", "#best-manager");
-      window.dispatchEvent(new HashChangeEvent("hashchange"));
+      window.dispatchEvent(new Event("hashchange"));
     });
 
-    const menu = page.getByRole("navigation", { name: "Awards categories" });
     const bestManagerLink = menu.getByRole("link", {
       name: viCatalog["home.awards.best_manager.title"],
     });
     await expect(bestManagerLink).toHaveAttribute("aria-current", "true");
+  });
+
+  test("US3 #1 — Sun* Kudos block renders with all five required elements (FR-018)", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    const kudosTitle = page.getByRole("heading", {
+      name: viCatalog["home.kudos.title"],
+    });
+    await expect(kudosTitle).toBeVisible();
+
+    const kudosSection = page.locator("section").filter({ has: kudosTitle });
+
+    await expect(
+      kudosSection.getByText(viCatalog["home.kudos.label"]),
+    ).toBeVisible();
+    await expect(
+      kudosSection.getByText(/ĐIỂM MỚI CỦA SAA 2025/),
+    ).toBeVisible();
+    await expect(kudosSection.getByAltText("Sun* Kudos")).toBeVisible();
+    await expect(
+      kudosSection.getByRole("link", {
+        name: viCatalog["home.kudos.detail_button"],
+      }),
+    ).toBeVisible();
+  });
+
+  test("US3 #2 — clicking 'Chi tiết' navigates to /sun-kudos (FR-008)", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    const kudosSection = page.locator("section").filter({
+      has: page.getByRole("heading", { name: viCatalog["home.kudos.title"] }),
+    });
+    await kudosSection
+      .getByRole("link", {
+        name: viCatalog["home.kudos.detail_button"],
+      })
+      .click();
+    await expect(page).toHaveURL(/\/sun-kudos$/);
+  });
+
+  test("US4 #1 — language chip opens dropdown with EN option, switching to EN updates copy without reload", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    await expect(
+      page.getByRole("heading", {
+        name: viCatalog["awards.detail.title_heading"],
+      }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: /Language: VN/i }).click();
+    await page.getByRole("menuitem", { name: /EN/i }).click();
+
+    await expect(
+      page.getByRole("heading", {
+        name: enCatalog["awards.detail.title_heading"],
+      }),
+    ).toBeVisible({ timeout: 5_000 });
+
+    const cookies = await context.cookies();
+    expect(cookies.find((c) => c.name === "saa_locale")?.value).toBe("en-US");
+  });
+
+  test("US4 #2 — profile avatar opens menu; 'Đăng xuất' signs the user out and redirects to /login", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    await page
+      .getByRole("button", { name: /E2E User/i })
+      .first()
+      .click();
+    await page
+      .getByRole("menuitem", { name: viCatalog["home.profile.sign_out"] })
+      .click();
+
+    await expect(page).toHaveURL(/\/login(\?|$)/);
+  });
+
+  test("US4 #3 — header 'About SAA 2025' link navigates to '/' (FR-009)", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    const headerNav = page.getByRole("navigation", { name: "Primary" });
+    await headerNav
+      .getByRole("link", { name: viCatalog["home.nav.about"] })
+      .click();
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  test("US4 #4 — footer 'Sun* Kudos' link navigates to /sun-kudos (FR-009)", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    const footerNav = page.getByRole("navigation", { name: "Footer" });
+    await footerNav
+      .getByRole("link", { name: viCatalog["home.footer.kudos"] })
+      .click();
+    await expect(page).toHaveURL(/\/sun-kudos$/);
   });
 });
