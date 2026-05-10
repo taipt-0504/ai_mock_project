@@ -24,7 +24,7 @@ export default function Hero({
       </div>
       <div className="flex w-full flex-col items-start gap-4">
         <Countdown eventStart={eventStart} locale={locale} />
-        <EventInfo locale={locale} />
+        <EventInfo locale={locale} eventStart={eventStart} />
       </div>
     </section>
   );

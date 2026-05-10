@@ -124,7 +124,13 @@ export default function Countdown({
   }, []);
 
   const parts = computeParts(eventStart, now);
-  const showSubtitle = !parts || !parts.isInPast;
+  // FR-008 (revised 2026-05-10): once the event has started, hide the entire
+  // Countdown — tiles + subtitle. Leaving 00 / 00 / 00 on the page suggested
+  // the event was still ahead and looked broken. EventInfo continues to
+  // render the venue / livestream copy independently.
+  if (parts?.isInPast) {
+    return null;
+  }
 
   const tokens = SIZE_TOKENS[size];
   const tiles: ReadonlyArray<{ label: string; value: string }> = [
@@ -147,15 +153,13 @@ export default function Countdown({
 
   return (
     <div className={`flex flex-col ${alignmentClass} ${tokens.columnGap}`}>
-      {showSubtitle
-        ? createElement(
-            subtitleAs,
-            {
-              className: `${tokens.label} ${subtitleAlignClass} text-saa-page-fg`,
-            },
-            t(subtitleKey, locale),
-          )
-        : null}
+      {createElement(
+        subtitleAs,
+        {
+          className: `${tokens.label} ${subtitleAlignClass} text-saa-page-fg`,
+        },
+        t(subtitleKey, locale),
+      )}
       <div className={`flex flex-row items-center ${tokens.groupGap}`}>
         {tiles.map((tile) => {
           const [d1, d2] = [tile.value.charAt(0), tile.value.charAt(1)];
