@@ -79,5 +79,11 @@
   "home.fab.read_rules": "Đọc thể lệ",
 
   "home.profile.profile": "Hồ sơ",
-  "home.profile.sign_out": "Đăng xuất"
+  "home.profile.sign_out": "Đăng xuất",
+
+  "gate.bypass.alert.title": "Đây là project demo",
+  "gate.bypass.alert.description": "Bạn có thể bỏ qua màn pre-launch để xem các trang đã ship mà không cần đổi env hay rebuild.",
+  "gate.bypass.alert.button": "Bỏ qua pre-launch (demo mode)",
+  "gate.bypass.banner.text": "Demo bypass đang bật — pre-launch gate đã bị tạm tắt cho session này.",
+  "gate.bypass.banner.button": "Tắt bypass"
 }

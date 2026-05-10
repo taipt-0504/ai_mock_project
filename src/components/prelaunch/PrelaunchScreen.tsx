@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import Countdown from "@/src/components/home/Countdown";
+import GateBypassPrompt from "@/src/components/prelaunch/GateBypassPrompt";
 import PrelaunchAutoExit from "@/src/components/prelaunch/PrelaunchAutoExit";
 import type { SupportedLocale } from "@/src/lib/i18n/types";
 
@@ -34,6 +35,7 @@ export default function PrelaunchScreen({
           size="lg"
           align="center"
         />
+        <GateBypassPrompt locale={locale} />
         <PrelaunchAutoExit launchAt={launchAt} />
       </div>
     </main>

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { config as appConfig } from "@/src/lib/config";
+import { hasGateBypassCookie } from "@/src/lib/cookies/gate-bypass";
 import { parseLaunchAt } from "@/src/lib/event/event-config";
 import { logger } from "@/src/lib/logger";
 import { evaluateGate } from "@/src/lib/proxy/prelaunch-gate";
@@ -94,7 +95,12 @@ export function proxy(request: NextRequest): NextResponse {
   const requestId = crypto.randomUUID();
   const url = new URL(request.url);
 
-  const decision = evaluateGate(url.pathname, LAUNCH_AT, new Date());
+  const decision = evaluateGate(
+    url.pathname,
+    LAUNCH_AT,
+    new Date(),
+    hasGateBypassCookie(request),
+  );
 
   if (decision.type === "redirect") {
     logger.debug("prelaunch-gate", {

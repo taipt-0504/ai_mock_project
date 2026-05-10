@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat, Montserrat_Alternates } from "next/font/google";
 import localFont from "next/font/local";
 
+import GateBypassBanner from "@/src/components/layout/GateBypassBanner";
 import Toaster from "@/src/components/ui/Toaster";
 
 import "./globals.css";
@@ -54,6 +55,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${montserratAlternates.variable} ${dseg7.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <GateBypassBanner />
         {children}
         <Toaster />
       </body>

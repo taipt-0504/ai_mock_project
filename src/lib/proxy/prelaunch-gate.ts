@@ -56,13 +56,22 @@ export function isWhitelisted(pathname: string): boolean {
  *   any other path:
  *     - launchAt is null/future → redirect PRELAUNCH_PATH (FR-006/FR-009)
  *     - launchAt is past         → passthrough              (gate lifted)
+ *
+ * `bypassActive` (FR-010, demo-only): when true (set by the prelaunch
+ * "Skip prelaunch" button via the `saa_gate_bypass` cookie), the gate
+ * behaves as if it were lifted FOR THIS REQUEST — even when the env says
+ * fail-closed. Other in-flight requests without the cookie keep redirecting
+ * normally; the bypass is per-user, not global.
  */
 export function evaluateGate(
   pathname: string,
   launchAt: Date | null,
   now: Date,
+  bypassActive: boolean = false,
 ): GateDecision {
-  const gateActive = launchAt === null || launchAt.getTime() > now.getTime();
+  const gateActive =
+    !bypassActive &&
+    (launchAt === null || launchAt.getTime() > now.getTime());
 
   if (pathname === PRELAUNCH_PATH) {
     return gateActive ? { type: "passthrough" } : { type: "redirect", target: "/" };

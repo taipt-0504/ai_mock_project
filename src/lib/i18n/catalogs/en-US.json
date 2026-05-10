@@ -79,5 +79,11 @@
   "home.fab.read_rules": "Read general rules",
 
   "home.profile.profile": "Profile",
-  "home.profile.sign_out": "Sign out"
+  "home.profile.sign_out": "Sign out",
+
+  "gate.bypass.alert.title": "This is a demo project",
+  "gate.bypass.alert.description": "You can skip the pre-launch screen to view the shipped pages without changing env vars or rebuilding.",
+  "gate.bypass.alert.button": "Skip pre-launch (demo mode)",
+  "gate.bypass.banner.text": "Demo bypass is on — the pre-launch gate is suspended for this session.",
+  "gate.bypass.banner.button": "Turn off bypass"
 }
