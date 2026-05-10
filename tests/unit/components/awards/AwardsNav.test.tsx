@@ -88,23 +88,34 @@ describe("AwardsNav (US2 / FR-006 / FR-007 / FR-014)", () => {
     expect(topTalent).not.toHaveAttribute("aria-current");
   });
 
-  it("follows the topmost intersecting card with intersectionRatio >= 0.5", () => {
+  it("follows the topmost visible card after an observer fire", () => {
     const cards = mountCardsForObservation();
+    Object.defineProperty(window, "innerHeight", {
+      value: 800,
+      configurable: true,
+    });
+    const rects: Record<AwardSlug, DOMRect> = {
+      "top-talent": new DOMRect(0, -900, 100, 800),
+      "top-project": new DOMRect(0, 200, 100, 400),
+      "top-project-leader": new DOMRect(0, 50, 100, 400),
+      "best-manager": new DOMRect(0, 1100, 100, 400),
+      "signature-2025-creator": new DOMRect(0, 2000, 100, 400),
+      mvp: new DOMRect(0, 2900, 100, 400),
+    };
+    for (const [slug, rect] of Object.entries(rects)) {
+      vi.spyOn(cards[slug as AwardSlug], "getBoundingClientRect").mockReturnValue(
+        rect,
+      );
+    }
+
     render(<AwardsNav locale="vi-VN" />);
 
     act(() => {
       globalThis.__triggerIntersection([
         {
-          target: cards["top-project"],
-          isIntersecting: true,
-          intersectionRatio: 0.7,
-          boundingClientRect: new DOMRectReadOnly(0, 200, 100, 100),
-        },
-        {
           target: cards["top-project-leader"],
           isIntersecting: true,
-          intersectionRatio: 0.6,
-          boundingClientRect: new DOMRectReadOnly(0, 50, 100, 100),
+          intersectionRatio: 1,
         },
       ]);
     });

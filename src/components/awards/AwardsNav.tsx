@@ -47,9 +47,19 @@ export default function AwardsNav({ locale }: { locale: SupportedLocale }) {
   const activeSlug: AwardSlug = scrolledSlug ?? hashSlug;
 
   useEffect(() => {
-    const reset = () => setScrolledSlug(null);
-    window.addEventListener("hashchange", reset);
-    return () => window.removeEventListener("hashchange", reset);
+    const onHashChange = () => {
+      const cleaned = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+      if (isAwardSlug(cleaned)) {
+        document
+          .getElementById(cleaned)
+          ?.scrollIntoView({ behavior: "auto", block: "start" });
+      }
+      setScrolledSlug(null);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   useEffect(() => {
@@ -57,33 +67,39 @@ export default function AwardsNav({ locale }: { locale: SupportedLocale }) {
       getComputedStyle(document.documentElement)
         .getPropertyValue("--saa-header-scroll-margin")
         .trim() || "0px";
-    const visible = new Map<AwardSlug, IntersectionObserverEntry>();
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const slug = entry.target.id;
-          if (!isAwardSlug(slug)) continue;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            visible.set(slug, entry);
-          } else {
-            visible.delete(slug);
-          }
+    const recomputeTopmost = () => {
+      const viewportH = window.innerHeight;
+      let topSlug: AwardSlug | null = null;
+      let bestTop = Number.POSITIVE_INFINITY;
+      for (const slug of AWARD_SLUGS) {
+        const el = document.getElementById(slug);
+        if (el === null) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 0 || rect.top >= viewportH) continue;
+        if (rect.top < bestTop) {
+          bestTop = rect.top;
+          topSlug = slug;
         }
-        if (visible.size === 0) return;
-        let topSlug: AwardSlug | null = null;
-        let topY = Number.POSITIVE_INFINITY;
-        for (const [slug, entry] of visible) {
-          const top = entry.boundingClientRect.top;
-          if (top < topY) {
-            topY = top;
+      }
+      if (topSlug === null) {
+        for (const slug of AWARD_SLUGS) {
+          const el = document.getElementById(slug);
+          if (el === null) continue;
+          const rect = el.getBoundingClientRect();
+          if (rect.top < 0 && rect.bottom > 0) {
             topSlug = slug;
+            break;
           }
         }
-        if (topSlug !== null) setScrolledSlug(topSlug);
-      },
-      { rootMargin: `-${headerOffset} 0px 0px 0px`, threshold: [0.5] },
-    );
+      }
+      if (topSlug !== null) setScrolledSlug(topSlug);
+    };
+
+    const observer = new IntersectionObserver(recomputeTopmost, {
+      rootMargin: `-${headerOffset} 0px 0px 0px`,
+      threshold: [0, 0.25, 0.5, 0.75, 1],
+    });
 
     for (const slug of AWARD_SLUGS) {
       const el = document.getElementById(slug);
