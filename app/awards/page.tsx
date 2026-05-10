@@ -57,7 +57,7 @@ export default async function AwardsPage() {
   }
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-saa-page text-saa-page-fg">
+    <main className="relative min-h-screen w-full overflow-x-clip bg-saa-page text-saa-page-fg">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[1392px]"
