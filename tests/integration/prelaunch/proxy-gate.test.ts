@@ -174,6 +174,62 @@ describe("proxy() — fail closed when env is null/empty/malformed (FR-009 / SC-
   });
 });
 
+describe("proxy() — demo gate-bypass cookie (Phase 16)", () => {
+  beforeEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
+  });
+
+  it("`saa_gate_bypass=1` cookie passes '/' through even when SAA_LAUNCH_AT is in the future", async () => {
+    const { proxy } = await loadProxyWithEnv("2099-01-01T00:00:00Z");
+    const res = proxy(
+      requestFor("/", { cookie: "saa_gate_bypass=1" }),
+    );
+
+    expect(res.status).not.toBe(307);
+    expect(res.headers.get("Location")).toBeNull();
+  });
+
+  it("`saa_gate_bypass=1` cookie redirects '/coming-soon' to '/' so the user lands past the gate", async () => {
+    const { proxy } = await loadProxyWithEnv("2099-01-01T00:00:00Z");
+    const res = proxy(
+      requestFor("/coming-soon", { cookie: "saa_gate_bypass=1" }),
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("Location")).toBe("http://localhost/");
+  });
+
+  it("the bypass cookie also overrides the FR-009 fail-closed null branch", async () => {
+    const { proxy } = await loadProxyWithEnv(undefined);
+    const res = proxy(
+      requestFor("/", { cookie: "saa_gate_bypass=1" }),
+    );
+
+    expect(res.status).not.toBe(307);
+  });
+
+  it("a request WITHOUT the bypass cookie keeps redirecting normally (cookie is per-user, not global)", async () => {
+    const { proxy } = await loadProxyWithEnv("2099-01-01T00:00:00Z");
+    const res = proxy(requestFor("/")); // no cookie
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("Location")).toBe("http://localhost/coming-soon");
+  });
+
+  it("a tampered cookie value (anything other than `1`) is ignored — gate stays active", async () => {
+    const { proxy } = await loadProxyWithEnv("2099-01-01T00:00:00Z");
+    const res = proxy(
+      requestFor("/", { cookie: "saa_gate_bypass=true" }),
+    );
+
+    expect(res.status).toBe(307);
+  });
+});
+
 describe("proxy() — abuse cases (TR-002 A04)", () => {
   beforeEach(() => {
     process.env = { ...ORIGINAL_ENV };

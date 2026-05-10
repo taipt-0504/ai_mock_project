@@ -55,12 +55,20 @@ describe("PrelaunchScreen (Prelaunch FR-001 / FR-003 / US4)", () => {
     expect(screen.getByText(MINUTES)).toBeInTheDocument();
   });
 
-  it("does NOT render any <button> or <a> elements (FR-003 / US4 invariant)", () => {
+  it("renders no navigation links and only the demo-bypass button (FR-003 / US4 invariant + Phase 16 exception)", () => {
+    // FR-003 / US4 forbid auth + nav controls on the prelaunch screen so the
+    // page stays a pure information surface. Phase 16 (2026-05-10) carves
+    // out a single, deliberate exception: the "Skip pre-launch (demo)"
+    // button required so portfolio reviewers can flip past the gate without
+    // a rebuild. The invariant tightens to "no <a> at all, and at most one
+    // <button> — the demo bypass submit".
     const future = new Date("2026-06-01T09:00:00.000Z");
     const { container } = render(<PrelaunchScreen launchAt={future} locale="vi-VN" />);
 
-    expect(container.querySelectorAll("button")).toHaveLength(0);
     expect(container.querySelectorAll("a")).toHaveLength(0);
+    const buttons = container.querySelectorAll("button");
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]).toHaveTextContent(viCatalog["gate.bypass.alert.button"]);
   });
 
   it("does NOT render a <header>, <footer>, or <nav> landmark", () => {

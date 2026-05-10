@@ -147,6 +147,56 @@ describe("evaluateGate — race at the zero boundary", () => {
   });
 });
 
+describe("evaluateGate — demo bypass cookie (Phase 16, FR-010)", () => {
+  // Mirrors the cookie-driven demo bypass: when `bypassActive=true` the gate
+  // behaves as if it were lifted FOR THIS REQUEST regardless of `launchAt`.
+  // Other requests in flight (no cookie) keep redirecting normally.
+  it("with bypassActive=true, '/' passes through even when launchAt is in the future", () => {
+    expect(evaluateGate("/", FUTURE, NOW, true)).toEqual({ type: "passthrough" });
+  });
+
+  it("with bypassActive=true, '/coming-soon' redirects to '/' so the user lands past the gate", () => {
+    expect(evaluateGate(PRELAUNCH_PATH, FUTURE, NOW, true)).toEqual({
+      type: "redirect",
+      target: "/",
+    });
+  });
+
+  it("with bypassActive=true, every Auth.js path passes through (so OAuth can complete in demo mode)", () => {
+    expect(evaluateGate("/api/auth/callback/google", FUTURE, NOW, true)).toEqual({
+      type: "passthrough",
+    });
+    expect(evaluateGate("/api/auth/session", null, NOW, true)).toEqual({
+      type: "passthrough",
+    });
+  });
+
+  it("bypassActive=true also overrides the FR-009 fail-closed null branch (demo bypass is explicit user consent)", () => {
+    expect(evaluateGate("/", null, NOW, true)).toEqual({ type: "passthrough" });
+  });
+
+  it("bypassActive=false (default) keeps the original gate-active behavior", () => {
+    expect(evaluateGate("/", FUTURE, NOW, false)).toEqual({
+      type: "redirect",
+      target: PRELAUNCH_PATH,
+    });
+    // Default param — no flag passed at all behaves like false.
+    expect(evaluateGate("/", FUTURE, NOW)).toEqual({
+      type: "redirect",
+      target: PRELAUNCH_PATH,
+    });
+  });
+
+  it("whitelisted paths stay passthrough regardless of bypass flag", () => {
+    expect(evaluateGate("/_next/data/foo.json", FUTURE, NOW, true)).toEqual({
+      type: "passthrough",
+    });
+    expect(evaluateGate("/favicon.ico", FUTURE, NOW, true)).toEqual({
+      type: "passthrough",
+    });
+  });
+});
+
 describe("evaluateGate — abuse cases (TR-002 A04)", () => {
   it("path-traversal `/coming-soon/../awards` does NOT match the prelaunch path string — it redirects", () => {
     // Note: `proxy()` will normally pass already-normalized URL.pathname here,

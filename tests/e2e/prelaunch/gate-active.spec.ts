@@ -74,14 +74,23 @@ test.describe("Prelaunch gate-active — every shipped route redirects to /comin
       await expect(heading).toHaveText(viCatalog["prelaunch.heading"]);
     });
 
-    test("Prelaunch screen has zero <button> and zero <a> elements (US4)", async ({ page }) => {
+    test("Prelaunch screen has zero <a> elements + only the demo-bypass <button> (US4 + Phase 16 exception)", async ({
+      page,
+    }) => {
       await page.goto("/coming-soon");
       // why: scope to the prelaunch <main> — Next.js dev mode injects its
       // own debug-overlay <button> at the bottom-right. The US4 invariant
       // is about the prelaunch surface, not platform-injected chrome.
+      // Phase 16 (2026-05-10) carves a single exception: the demo-bypass
+      // submit button. No <a> at all; exactly one <button>; that button
+      // matches the documented bypass copy.
       const main = page.locator("main");
-      expect(await main.locator("button").count()).toBe(0);
       expect(await main.locator("a").count()).toBe(0);
+      const buttons = main.locator("button");
+      expect(await buttons.count()).toBe(1);
+      await expect(buttons.first()).toHaveText(
+        viCatalog["gate.bypass.alert.button"],
+      );
     });
   });
 
