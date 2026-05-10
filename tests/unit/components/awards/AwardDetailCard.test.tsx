@@ -133,4 +133,11 @@ describe("AwardDetailCard (FR-002 / FR-006 / FR-012)", () => {
     expect(container.querySelectorAll("a")).toHaveLength(0);
     expect(container.querySelectorAll("input,select,textarea")).toHaveLength(0);
   });
+
+  it("renders the label image with a non-empty alt prop (Edge Case — image load failure)", () => {
+    render(<AwardDetailCard award={TOP_TALENT} locale="vi-VN" />);
+    const labelImage = screen.getByAltText(vi[TOP_TALENT.titleKey]);
+    expect(labelImage.tagName).toBe("IMG");
+    expect(labelImage.getAttribute("alt") ?? "").not.toBe("");
+  });
 });

@@ -302,4 +302,120 @@ test.describe("Awards page — US1 + US5", () => {
       .click();
     await expect(page).toHaveURL(/\/sun-kudos$/);
   });
+
+  test("Edge case — deep-link to an unknown slug renders the page with Top Talent active and no console error (FR-007)", async ({
+    page,
+    context,
+  }) => {
+    const consoleErrors: string[] = [];
+    page.on("pageerror", (err) => consoleErrors.push(err.message));
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+
+    await signIn(context);
+    const response = await page.goto("/awards#nonexistent-slug");
+    expect(response?.status()).toBe(200);
+
+    await expect(
+      page.getByRole("heading", {
+        name: viCatalog["awards.detail.title_heading"],
+      }),
+    ).toBeVisible();
+
+    const menu = page.getByRole("navigation", { name: "Awards categories" });
+    const topTalentLink = menu.getByRole("link", {
+      name: viCatalog["home.awards.top_talent.title"],
+    });
+    await expect(topTalentLink).toHaveAttribute("aria-current", "true");
+
+    expect(consoleErrors).toEqual([]);
+  });
+
+  test("Edge case — JavaScript disabled: native anchor scroll still navigates (FR-014)", async ({
+    browser,
+  }) => {
+    const noJsContext = await browser.newContext({ javaScriptEnabled: false });
+    const { sessionToken } = await seedAuthenticatedUser({
+      userId: "awards-no-js-user",
+      email: "awards-no-js@example.com",
+      sessionToken: "awards-no-js-session",
+    });
+    await noJsContext.addCookies([
+      {
+        name: "authjs.session-token",
+        value: sessionToken,
+        domain: "localhost",
+        path: "/",
+        httpOnly: true,
+      },
+    ]);
+
+    const noJsPage = await noJsContext.newPage();
+    await noJsPage.goto("/awards");
+
+    const menu = noJsPage.getByRole("navigation", { name: "Awards categories" });
+    const bestManagerLink = menu.getByRole("link", {
+      name: viCatalog["home.awards.best_manager.title"],
+    });
+    await bestManagerLink.click();
+
+    expect(noJsPage.url()).toContain("#best-manager");
+    await expect(noJsPage.locator("article#best-manager")).toBeInViewport();
+    await expect(bestManagerLink).not.toHaveAttribute("aria-current", "true");
+
+    await noJsContext.close();
+  });
+
+  test("Edge case — locale switch mid-screen flips copy without reload (DOM identity preserved)", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+
+    const titleHeading = page.getByRole("heading", {
+      name: viCatalog["awards.detail.title_heading"],
+    });
+    await expect(titleHeading).toBeVisible();
+
+    const sentinelId = await page.evaluate(() => {
+      const main = document.querySelector("main");
+      if (main === null) return null;
+      const stamp = `awards-locale-sentinel-${Date.now()}`;
+      main.setAttribute("data-sentinel", stamp);
+      return stamp;
+    });
+    expect(sentinelId).not.toBeNull();
+
+    await page.getByRole("button", { name: /Language: VN/i }).click();
+    await page.getByRole("menuitem", { name: /EN/i }).click();
+
+    await expect(
+      page.getByRole("heading", {
+        name: enCatalog["awards.detail.title_heading"],
+      }),
+    ).toBeVisible({ timeout: 5_000 });
+
+    const stillSentinel = await page.evaluate(
+      () => document.querySelector("main")?.getAttribute("data-sentinel") ?? null,
+    );
+    expect(stillSentinel).toBe(sentinelId);
+  });
+
+  test("Edge case — at 360 px viewport the menu is hidden (Q-HTG4 scroll-only fallback)", async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await signIn(context);
+    await page.goto("/awards");
+
+    await expect(
+      page.getByRole("navigation", { name: "Awards categories" }),
+    ).toBeHidden();
+
+    await expect(page.locator("article#top-talent")).toBeVisible();
+    await expect(page.locator("article#mvp")).toBeAttached();
+  });
 });
