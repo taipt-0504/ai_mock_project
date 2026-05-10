@@ -418,4 +418,28 @@ test.describe("Awards page — US1 + US5", () => {
     await expect(page.locator("article#top-talent")).toBeVisible();
     await expect(page.locator("article#mvp")).toBeAttached();
   });
+
+  test("US2 #2 — left menu sticks to viewport top while the user scrolls through the cards (FR-005)", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/awards");
+    const menu = page.getByRole("navigation", { name: "Awards categories" });
+    await expect(menu).toBeVisible();
+    await page.waitForLoadState("networkidle");
+
+    // Scroll to a middle card so the AwardsLayout section still encloses
+    // the viewport top — sticky elements only stick within their
+    // containing block, so scrolling all the way to the last card would
+    // move the section's bottom edge above the viewport.
+    await page.locator("article#top-project-leader").scrollIntoViewIfNeeded();
+
+    await expect(menu).toBeInViewport();
+    const menuTop = await menu.evaluate(
+      (el) => el.getBoundingClientRect().top,
+    );
+    expect(menuTop).toBeGreaterThanOrEqual(0);
+    expect(menuTop).toBeLessThan(80);
+  });
 });
