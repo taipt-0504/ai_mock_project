@@ -325,6 +325,28 @@
 
 ---
 
+## Phase 15 — Countdown zero-state hide + EventInfo time-from-env (post-launch behavior fix, 2026-05-10)
+
+**Goal**: Two follow-up corrections from the user after live use:
+1. **Hide the entire countdown block** once the event has started — not just the subtitle. Showing `00 / 00 / 00` after the event made the page look broken (suggested the event was still pending).
+2. **Drive the `EventInfo` time row from `SAA_EVENT_START_AT`** rather than a hardcoded i18n string. A single env var should govern both the countdown target and the displayed event date.
+
+These revise FR-008 (zero-state) and FR-009 (event-info time) in [spec.md](spec.md). Implemented TDD red→green per Constitution V.
+
+- [x] T079 [P15] [US1] [Test] **Implemented 2026-05-10** — rewrote scenario 3 in [tests/unit/components/home/Countdown.test.tsx](../../tests/unit/components/home/Countdown.test.tsx) to assert the whole `Countdown` returns `null` when `eventStart` is in the past (`container` is empty; no `Days`/`Hours`/`Minutes` labels in the DOM). Updated the `subtitleAs='h1'` zero-state scenario the same way. Verified RED on the un-fixed component, then patched [src/components/home/Countdown.tsx](../../../src/components/home/Countdown.tsx) to early-return `null` when `parts?.isInPast` and dropped the now-dead `showSubtitle` flag. The unmounted block neither ticks nor allocates intervals after that frame | tests/unit/components/home/Countdown.test.tsx + src/components/home/Countdown.tsx
+- [x] T080 [P15] [US1] [Test] **Implemented 2026-05-10** — extended [tests/unit/components/home/EventInfo.test.tsx](../../tests/unit/components/home/EventInfo.test.tsx) with three new assertions: vi-VN formats the prop as `DD/MM/YYYY` (`31/12/2025`), en-US formats as `Month D, YYYY` (`December 31, 2025`), and a null `eventStart` falls back to `home.event.time.value`. Verified RED, then implemented the green path:
+  - New util [src/lib/event/format.ts](../../../src/lib/event/format.ts) → `formatEventDate(date, locale)`. Uses `Intl.DateTimeFormat` with `timeZone: "Asia/Ho_Chi_Minh"` so server runtimes in any TZ render the same date the SAA program publishes.
+  - [src/components/home/EventInfo.tsx](../../../src/components/home/EventInfo.tsx) now takes `eventStart: Date | null`. When non-null, it renders `formatEventDate(eventStart, locale)`; when null, it falls back to `t("home.event.time.value", locale)`.
+  - [src/components/home/Hero.tsx](../../../src/components/home/Hero.tsx) forwards the existing `eventStart` prop (already wired from [app/page.tsx](../../../app/page.tsx) for the countdown) into `EventInfo`. No new env hop, no new prisma call, no new env-config code path.
+  - i18n catalogs updated: `home.event.time.value` flipped from a stale event date (`26/12/2025` / `December 26, 2025`) to a TBD fallback (`Sắp công bố` / `To be announced`). The fallback now renders only when `SAA_EVENT_START_AT` is missing/malformed — its old role as the canonical date copy is gone | tests/unit/components/home/EventInfo.test.tsx + src/lib/event/format.ts + src/components/home/EventInfo.tsx + src/components/home/Hero.tsx + src/lib/i18n/catalogs/{vi-VN,en-US}.json
+- [x] T081 [P15] [US1] [Spec] **Updated 2026-05-10** — revised US1 acceptance scenarios 3 + 5 + FR-008 + FR-009 + B1 / B1.2 rows in [spec.md](spec.md) to match the new behavior (whole-block hide + env-driven time value). Each delta carries a `_(Revised 2026-05-10: ...)_` annotation explaining the prior wording so reviewers see the diff intent | .momorph/specs/i87tDx10uM-homepage-saa/spec.md
+
+**Validation**: Vitest 46/46 files, 323/323 tests GREEN. Targeted Playwright suites (`tests/e2e/home/auth-redirect.spec.ts`, `tests/e2e/home/language-switch.spec.ts`, `tests/e2e/home/notification-bell.spec.ts`) GREEN. Full `gate-disabled` suite: 53 passed (one notification-bell flake passed on rerun, unrelated). `npx tsc --noEmit` + `npx eslint` on touched files clean.
+
+**Out of scope for Phase 15**: changing the per-minute tick cadence, the visibilitychange recovery behavior (US1 scenario "tab returns from idle"), the `--` fallback for missing env (US1 scenario 4), the LED tile typography (Phase 14), or the location/Facebook copy.
+
+---
+
 ## Notes
 
 - Commit after each logical group: e.g. one commit for Phase 1 (asset prep), one for Phase 2 (foundation), one per user story phase.
