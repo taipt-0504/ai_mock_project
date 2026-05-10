@@ -60,16 +60,23 @@ describe("Countdown (US1)", () => {
     expect(tilesFromDom().minutes).toBe("04");
   });
 
-  it("scenario 3: zero-state — eventStart in the past renders 00 / 00 / 00 and hides the subtitle", () => {
+  it("scenario 3: zero-state — eventStart in the past hides the entire Countdown (tiles + subtitle)", () => {
+    // FR-008 (revised 2026-05-10): the whole component disappears once the
+    // event has started — not just the subtitle. Avoids leaving an awkward
+    // 00 / 00 / 00 "ghost" countdown that suggests the event is still
+    // pending. Hero composition keeps EventInfo on the page; the countdown
+    // block alone is what unmounts.
     const eventStart = new Date("2020-01-01T00:00:00.000Z"); // far in the past
 
-    render(<Countdown eventStart={eventStart} locale="vi-VN" />);
+    const { container } = render(
+      <Countdown eventStart={eventStart} locale="vi-VN" />,
+    );
 
+    expect(container).toBeEmptyDOMElement();
     expect(screen.queryByText(SUBTITLE)).not.toBeInTheDocument();
-    const tiles = tilesFromDom();
-    expect(tiles.days).toBe("00");
-    expect(tiles.hours).toBe("00");
-    expect(tiles.minutes).toBe("00");
+    expect(screen.queryByText(DAYS)).not.toBeInTheDocument();
+    expect(screen.queryByText(HOURS)).not.toBeInTheDocument();
+    expect(screen.queryByText(MINUTES)).not.toBeInTheDocument();
   });
 
   it("scenario 4: null eventStart — renders -- / -- / -- fallback (still shows the subtitle)", () => {
@@ -172,9 +179,9 @@ describe("Countdown — subtitleAs / subtitleKey props (Prelaunch FR-010, Q-CP5)
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
   });
 
-  it("subtitleAs='h1' is hidden when eventStart is in the past (zero-state) — same rule as default", () => {
+  it("subtitleAs='h1' — entire component is hidden when eventStart is in the past (FR-008 revised)", () => {
     const eventStart = new Date("2020-01-01T00:00:00.000Z");
-    render(
+    const { container } = render(
       <Countdown
         eventStart={eventStart}
         locale="vi-VN"
@@ -183,6 +190,7 @@ describe("Countdown — subtitleAs / subtitleKey props (Prelaunch FR-010, Q-CP5)
       />,
     );
 
+    expect(container).toBeEmptyDOMElement();
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
     expect(screen.queryByText(PRELAUNCH_HEADING)).not.toBeInTheDocument();
   });
