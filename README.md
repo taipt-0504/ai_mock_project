@@ -34,6 +34,17 @@ Run the tests with `npm run test` (Vitest) and `npm run test:e2e`
 
 ## Pre-launch gate
 
+> **For reviewers**: this is a portfolio / demo project. The pre-launch
+> screen ships with a **demo-mode "Skip pre-launch" button** (Phase 16,
+> 2026-05-10) so you can inspect the post-gate surface without rebuilding
+> or flipping `SAA_LAUNCH_AT`. Click it on `/coming-soon` → an httpOnly
+> cookie (`saa_gate_bypass`, 7-day TTL) is set and the proxy lets your
+> requests through. A small `Demo bypass active · Turn off bypass`
+> banner appears at the top of every post-gate page so you can revert to
+> the gated view in one click. **This bypass is intentional and would be
+> removed for any real production deploy** — see the demo-only annotation
+> in [`src/lib/cookies/gate-bypass.ts`](./src/lib/cookies/gate-bypass.ts).
+
 `proxy.ts` ships a global pre-launch gate. Until `now() >= SAA_LAUNCH_AT`,
 every non-whitelisted request is 307'd to `/coming-soon`. Once the gate
 lifts, `/coming-soon` itself redirects to `/` and the rest of the app
