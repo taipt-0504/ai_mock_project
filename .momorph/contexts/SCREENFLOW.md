@@ -177,3 +177,20 @@ Sun* Kudos — Live Board (/sun-kudos)
     error; B.3.2 tooltip + TC `31936b72` "+2 hearts" are authoritative.
   - Q-LB8 (open, implementation-level): exact position of Refresh button — parked to phase
     implement; spec recommends near `C.1_Header Giải thưởng`.
+
+- ⚠ **Kudos Live Board outgoing nav — metadata survey (2026-05-11, task T005)**.
+  Four outgoing targets from `MaZUn5xHXZ` Live Board had no SCREENFLOW entry. Metadata
+  surveyed via MoMorph MCP `get_frame` to confirm existence + canonical screenId.
+  Full UX surveys are NOT done here — each target gets its own `/momorph.screenflow` run
+  when its dedicated spec is queued. Recording metadata so Constitution III evidence-based
+  navigation can cite a surveyed source:
+
+  | screenId | Figma name | Proposed route | Triggered from | Survey status |
+  |---|---|---|---|---|
+  | `w4WUvsJ9KI` | "Profile người khác" | `/profile/[userId]` | Avatar/name click on Kudo card; leaderboard avatar; Spotlight node | Metadata-only 2026-05-11. Full survey TBD before Phase 5 (Feed) implements avatar click. |
+  | `6-1LRz3vqr` | "Tất cả thông báo" | `/notifications` (proposed) — full route vs panel TBD | Header notification bell | Metadata-only 2026-05-11. Already mentioned in Homepage SAA outgoing. Full survey TBD when notification page is queued. |
+  | `J3-4YFIpMM` | "Open secret box- chưa mở " (revision `c1504a9e`, **has `Spec Created` tag**) | (dialog, no route — overlay) | `D.1.8_Button mở quà` click when `secret_boxes_pending_count > 0` | Metadata-only 2026-05-11. **J3-4YFIpMM is canonical** (has spec tag); `m0zV-VstXX` is a no-revision duplicate. Full survey TBD before Phase 3 implements `OpenGiftButton` mutation flow. |
+  | `onDIohs2bS` | "View Kudo" | `/sun-kudos/[id]` (locked Q-LB4) + parallel modal | C.3 / B.3 card content click; "Xem chi tiết" Highlight action; Spotlight node click | Metadata-only 2026-05-11. **Plan Q-PLAN6 lock**: MVP fallback uses minimal layout (sender/receiver + content + gallery + hashtag + ActionBar — no comments) — full Figma survey deferred unless additional element discovered. Re-open Q-PLAN6 if survey reveals comments / replies. |
+
+  Implementer of Phase 4/5/9 MUST use the matching screenId from this table for
+  Constitution III evidence-based navigation citations.
