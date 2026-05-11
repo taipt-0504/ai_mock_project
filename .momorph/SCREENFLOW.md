@@ -5,7 +5,7 @@
 - **Figma File Key**: 9ypp4enmFmdK3YAFJLIu6C
 - **Figma URL**: https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C
 - **Created**: 2026-05-07
-- **Last Updated**: 2026-05-10 (Homepage SAA Phase 15 — Countdown zero-state hides the entire block; `EventInfo` time row now derives from `SAA_EVENT_START_AT` instead of a hardcoded i18n string. FR-008 / FR-009 revised. Vitest 323/323; targeted Playwright suites GREEN.)
+- **Last Updated**: 2026-05-11 (Sun* Kudos — Live Board `MaZUn5xHXZ` added to Screen Index; spec.md drafted, reviewed (pass 1+2), then locked decisions via Q-LB1..Q-LB7 same day — route `/sun-kudos`, **no realtime for MVP** (manual refresh + Refresh button FR-021), Kudos detail `/sun-kudos/{id}` + parallel modal, Phòng ban filter scope = sender OR receiver, multi-filter combine = AND, hearts ≠ stars. Q-LB3 (mobile strategy) deferred — not in MVP scope. Q-LB8 (Refresh button position) parked to implement phase. Spec **Ready for `momorph.plan`**.)
 
 > ### Global Pre-launch Gate — read this first
 >
@@ -51,11 +51,11 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Screens (known) | 9 |
+| Total Screens (known) | 10 |
 | Reusable Components (overlays) | 3 |
-| Surveyed in depth | 6 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user, Countdown - Prelaunch page, Hệ thống giải) |
+| Surveyed in depth | 7 (Login, Dropdown — Language, Homepage SAA, Dropdown — Profile user, Countdown - Prelaunch page, Hệ thống giải, Sun* Kudos - Live Board) |
 | Remaining | 3 |
-| Completion | ~67% |
+| Completion | ~70% |
 
 ---
 
@@ -69,6 +69,7 @@
 | 4 | [iOS] Login | `8HGlvYGJWq` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=8HGlvYGJWq | pending | — | (same as Login) | (same as Login) |
 | 5 | Countdown - Prelaunch page | `8PJQswPZmU` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=8PJQswPZmU | surveyed (2026-05-08, re-architected as **global pre-launch gate** same day; open questions Q-CP1..Q-CP5 + Q-PG1..Q-PG5 all resolved 2026-05-08 — route `/coming-soon`, env `SAA_LAUNCH_AT`) | — (no calls; countdown driven by NEW env var `SAA_LAUNCH_AT`, distinct from `SAA_EVENT_START_AT` which Homepage `B1` continues to use) | none in-screen — `now() >= SAA_LAUNCH_AT` lifts the proxy gate; all routes resume normal flow (anon → `/login` per Homepage US0, authed → Homepage SAA) |
 | 6 | Hệ thống giải (Awards Information) | `zFYDgyj_pD` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=zFYDgyj_pD | surveyed (2026-05-09); spec **Ready for `momorph.plan`** (Q-HTG1..Q-HTG5 all resolved 2026-05-09 — route `/awards`, data = static catalog, IntersectionObserver, mobile = scroll-only fallback at MVP) | `specs/zFYDgyj_pD-he-thong-giai/spec.md` | No new endpoints (resolved per Q-HTG3). Reuses `auth()`, `GET /api/notifications/unread-count`, `POST /api/i18n/locale`, `signOutAction`. Read-only display screen. | Sun* Kudos detail (`/sun-kudos`) via `D2.1` `Chi tiết` button; Homepage SAA via header `A1.1` Logo / `A1.2` About SAA 2025 (inferred); Dropdown — Language (overlay); Dropdown — Profile user/admin (overlay) |
+| 7 | Sun* Kudos — Live Board | `MaZUn5xHXZ` | https://www.figma.com/design/9ypp4enmFmdK3YAFJLIu6C?node-id=MaZUn5xHXZ | surveyed + reviewed + decisions locked (2026-05-11); spec **Ready for `momorph.plan`** (Q-LB1/2/4/5/6/7 resolved; Q-LB3 deferred; Q-LB8 parked to implement) | `specs/MaZUn5xHXZ-sun-kudos-live-board/spec.md` | `GET/POST /api/kudos`, `GET /api/kudos/highlight`, `GET /api/kudos/{id}`, `POST/DELETE /api/kudos/{id}/like`, `GET /api/kudos/spotlight`, `GET /api/sunners/search`, `GET /api/users/me/stats`, `GET /api/sunners/top-receivers`, `GET /api/sunners/recent-rankups`, `GET /api/hashtags`, `GET /api/departments`, `POST /api/secret-boxes/open`, `GET /api/notifications/unread-count`, `POST/PATCH /api/admin/special-days` (admin). **No realtime channel** — MVP dùng manual refresh. | Route `/sun-kudos`. Viết Kudo dialog (`ihQ26W78P2`) via `A.1`; Profile (`w4WUvsJ9KI`) via avatar/name; **Kudos detail `/sun-kudos/{id}`** + parallel modal via card content / `Xem chi tiết` / Spotlight node; Open Secret Box dialog (`m0zV-VstXX` / `J3-4YFIpMM`) via `D.1.8`; Tất cả thông báo (`6-1LRz3vqr`) via Header notification; Dropdown — Language (overlay); Dropdown — Profile (overlay) |
 
 ### Reusable Components (Overlays — not routes)
 
