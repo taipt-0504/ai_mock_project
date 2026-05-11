@@ -32,12 +32,23 @@ describe("next.config.ts — images.remotePatterns", () => {
     // is actually rendered (search `next/image` callsites for the URL).
     const allowed = new Set([
       "lh3.googleusercontent.com",
-      // "picsum.photos" — to be added in Phase 1 (DB seed) when
-      // KudoImage rows use placeholder URLs (Q-PLAN4 parked).
+      "picsum.photos",
     ]);
     for (const p of patterns) {
       if (typeof p === "string") continue;
       expect(allowed.has(p.hostname ?? "")).toBe(true);
     }
+  });
+
+  it("includes picsum.photos /** for Kudos seed gallery placeholders (Q-PLAN4 parked)", () => {
+    // Used by: `prisma/seed.ts` `KudoImage.url`. Will be replaced with the
+    // real upload pipeline once `ihQ26W78P2` (Viết Kudo dialog) ships.
+    expect(patterns).toContainEqual(
+      expect.objectContaining({
+        protocol: "https",
+        hostname: "picsum.photos",
+        pathname: "/**",
+      }),
+    );
   });
 });
