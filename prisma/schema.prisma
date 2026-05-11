@@ -25,11 +25,34 @@ model User {
   // Project extension — Login spec FR-008/FR-010, allowlist-validated by TR-006.
   locale String @default("vi-VN")
 
+  // Sun* Kudos extension (Phase 2 of MaZUn5xHXZ plan). `departmentId` + `title`
+  // expose org metadata for filtering + leaderboard rows. Five denormalized
+  // counters are updated in the same `$transaction` as the source mutation
+  // (create-Kudo, like, secret-box-open) so the Live Board renders without
+  // aggregate joins on the hot path. Drift mitigation: T140 ships
+  // `scripts/recompute-kudos-counters.ts` (Q-PLAN5 escape hatch). Auth.js
+  // contract preserved — no `avatarUrl` (Q-PLAN7 reuses `image`).
+  departmentId            String?
+  title                   String?
+  kudosReceivedCount      Int     @default(0)
+  kudosSentCount          Int     @default(0)
+  heartsReceivedCount     Int     @default(0)
+  secretBoxesOpenedCount  Int     @default(0)
+  secretBoxesPendingCount Int     @default(0)
+
   accounts Account[]
   sessions Session[]
 
+  department    Department? @relation(fields: [departmentId], references: [id])
+  sentKudos     Kudo[]      @relation("KudoSender")
+  receivedKudos Kudo[]      @relation("KudoReceiver")
+  kudoLikes     KudoLike[]
+  secretBoxes   SecretBox[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
 }
 
 model Account {
@@ -66,4 +89,145 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sun* Kudos — Live Board domain (Phase 2 of MaZUn5xHXZ plan).
+// 9 new models + 1 enum power the entire Live Board feature surface.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Department {
+  id   String @id @default(cuid())
+  name String @unique
+
+  users User[]
+
+  createdAt DateTime @default(now())
+}
+
+model Hashtag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  kudos KudoHashtag[]
+
+  createdAt DateTime @default(now())
+}
+
+model Kudo {
+  id             String @id @default(cuid())
+  senderUserId   String
+  receiverUserId String
+  content        String @db.Text
+
+  // Denormalized — updated atomically with each KudoLike insert/delete.
+  heartCount Int @default(0)
+
+  sender   User          @relation("KudoSender", fields: [senderUserId], references: [id], onDelete: Cascade)
+  receiver User          @relation("KudoReceiver", fields: [receiverUserId], references: [id], onDelete: Cascade)
+  hashtags KudoHashtag[]
+  images   KudoImage[]
+  likes    KudoLike[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Feed: cursor pagination ordered by (createdAt DESC, id DESC).
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  // Highlight: top 5 by heartCount.
+  @@index([heartCount(sort: Desc)])
+  @@index([senderUserId])
+  @@index([receiverUserId])
+}
+
+model KudoImage {
+  id     String @id @default(cuid())
+  kudoId String
+  url    String
+  width  Int?
+  height Int?
+  order  Int    @default(0)
+
+  kudo Kudo @relation(fields: [kudoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([kudoId])
+}
+
+model KudoLike {
+  id     String @id @default(cuid())
+  kudoId String
+  userId String
+
+  // True when the like was recorded on a SpecialDay (server-side check at
+  // like time). DELETE path reads this to roll back the exact bonus —
+  // FR-010 + TR-004.
+  isSpecialDayLike Boolean @default(false)
+
+  kudo Kudo @relation(fields: [kudoId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Idempotent like — one row per (kudo, user).
+  @@unique([kudoId, userId])
+  @@index([userId])
+}
+
+model KudoHashtag {
+  kudoId    String
+  hashtagId String
+
+  kudo    Kudo    @relation(fields: [kudoId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([kudoId, hashtagId])
+  @@index([hashtagId])
+}
+
+model SpecialDay {
+  id         String   @id @default(cuid())
+  date       DateTime @db.Date
+  label      String?
+  // Multiplier applied to `heartsReceivedCount` increment on a like recorded
+  // this day (FR-010). Default 2 = "double-heart day".
+  multiplier Int      @default(2)
+
+  createdAt DateTime @default(now())
+
+  @@unique([date])
+}
+
+model Gift {
+  id       String  @id @default(cuid())
+  name     String
+  imageUrl String?
+
+  secretBoxes SecretBox[]
+
+  createdAt DateTime @default(now())
+}
+
+model SecretBox {
+  id       String         @id @default(cuid())
+  userId   String
+  giftId   String?
+  state    SecretBoxState @default(pending)
+  openedAt DateTime?
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gift Gift? @relation(fields: [giftId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, state])
+}
+
+enum SecretBoxState {
+  pending
+  opened
 }
