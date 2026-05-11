@@ -48,6 +48,19 @@
      AWAY with the page on scroll, so 0px is the correct value today. If the Header is
      later converted to `position: sticky` / `position: fixed`, set this to `5rem`. */
   --saa-header-scroll-margin: 0px;
+
+  /* SAA 2025 — Sun* Kudos Live Board tokens (sourced from Figma frame MaZUn5xHXZ).
+     Section header gold (#FFEA9E) reuses `--color-saa-button-primary`. Subtitle
+     white reuses `--color-saa-page-fg`. Sidebar / leaderboard divider reuses
+     `--color-saa-divider`. Container-2 sidebar bg reuses
+     `--color-saa-dropdown-surface` (#00070C). Border #998C5F reuses
+     `--color-saa-dropdown-border`. The tokens below are the NEW values unique
+     to this screen. */
+  --color-saa-kudos-card-bg: #fff8e1; /* B.3 + C.3 card cream surface */
+  --color-saa-kudos-filter-bg: rgba(255, 234, 158, 0.1); /* B.1.1 / B.1.2 / A.1 input translucent gold */
+  --color-saa-kudos-filter-bg-active: rgba(255, 234, 158, 0.4); /* active filter + card content inner panel */
+  --color-saa-kudos-hashtag-fg: #d4271d; /* C.3.7 hashtag red — separate semantic from notification-dot */
+  --color-saa-kudos-time-fg: #999999; /* B.4.1 / C.3.4 timestamp muted */
 }
 
 @theme inline {
@@ -80,6 +93,15 @@
   --color-saa-notification-dot: var(--color-saa-notification-dot);
   --color-saa-countdown-tile-border: var(--color-saa-countdown-tile-border);
   --color-saa-countdown-digit-fg: var(--color-saa-countdown-digit-fg);
+
+  /* Kudos screen utility-name registration. Tailwind will emit `bg-saa-kudos-card`,
+     `bg-saa-kudos-filter`, `bg-saa-kudos-filter-active`, `text-saa-kudos-hashtag-fg`,
+     `text-saa-kudos-time-fg`. */
+  --color-saa-kudos-card: var(--color-saa-kudos-card-bg);
+  --color-saa-kudos-filter: var(--color-saa-kudos-filter-bg);
+  --color-saa-kudos-filter-active: var(--color-saa-kudos-filter-bg-active);
+  --color-saa-kudos-hashtag-fg: var(--color-saa-kudos-hashtag-fg);
+  --color-saa-kudos-time-fg: var(--color-saa-kudos-time-fg);
 }
 
 /* SAA 2025 — Countdown LED digit tile (Figma frames 8PJQswPZmU prelaunch +
