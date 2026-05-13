@@ -5,6 +5,7 @@ import NavLinks from "@/src/components/home/NavLinks";
 import NotificationBell from "@/src/components/home/NotificationBell";
 import ProfileButton from "@/src/components/home/ProfileButton";
 import Header from "@/src/components/header/Header";
+import KudosCreateInput from "@/src/components/sun-kudos/KudosCreateInput";
 import type { SupportedLocale } from "@/src/lib/i18n/types";
 
 const CURRENT_PATH = "/sun-kudos";
@@ -67,8 +68,10 @@ export default function KudosBoardLayout({
         <section
           aria-label="Viết Kudos"
           data-testid="kudos-write-input-slot"
-          className="flex w-full max-w-[1152px] flex-col gap-10"
-        />
+          className="flex w-full max-w-[1152px] flex-col items-center gap-10"
+        >
+          <KudosCreateInput locale={locale} />
+        </section>
 
         <section
           aria-label="Bộ lọc Kudos"

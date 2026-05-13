@@ -79,5 +79,11 @@
   "home.fab.read_rules": "Read general rules",
 
   "home.profile.profile": "Profile",
-  "home.profile.sign_out": "Sign out"
+  "home.profile.sign_out": "Sign out",
+
+  "kudos.write.input.placeholder": "Who would you like to thank and recognize today?",
+  "kudos.write.input.aria_label": "Write a new Kudos",
+  "kudos.write.stub.title": "Write Kudos",
+  "kudos.write.stub.description": "The Write Kudos dialog is in development. Please check back soon!",
+  "kudos.write.stub.back": "Back to the Kudos board"
 }

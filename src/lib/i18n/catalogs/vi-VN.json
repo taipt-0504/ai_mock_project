@@ -79,5 +79,11 @@
   "home.fab.read_rules": "Đọc thể lệ",
 
   "home.profile.profile": "Hồ sơ",
-  "home.profile.sign_out": "Đăng xuất"
+  "home.profile.sign_out": "Đăng xuất",
+
+  "kudos.write.input.placeholder": "Hôm nay, bạn muốn gửi lời cảm ơn và ghi nhận đến ai?",
+  "kudos.write.input.aria_label": "Viết Kudos mới",
+  "kudos.write.stub.title": "Viết Kudos",
+  "kudos.write.stub.description": "Hộp thoại Viết Kudos đang được phát triển. Vui lòng quay lại sau nhé!",
+  "kudos.write.stub.back": "Quay lại bảng Kudos"
 }
