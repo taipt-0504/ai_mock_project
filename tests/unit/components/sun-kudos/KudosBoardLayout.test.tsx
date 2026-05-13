@@ -15,6 +15,14 @@ vi.mock("@/src/components/home/ProfileButton", () => ({
   default: () => <button data-testid="profile-button-stub">profile</button>,
 }));
 
+vi.mock("@/src/components/sun-kudos/KudosCreateInput", () => ({
+  default: ({ locale }: { locale: string }) => (
+    <button data-testid="kudos-create-input-stub" data-locale={locale}>
+      write trigger
+    </button>
+  ),
+}));
+
 import KudosBoardLayout from "@/src/components/sun-kudos/KudosBoardLayout";
 
 /**
@@ -69,6 +77,22 @@ describe("KudosBoardLayout — Phase 2 skeleton", () => {
     expect(screen.getByTestId("kudos-highlight-slot")).toBeInTheDocument();
     expect(screen.getByTestId("kudos-feed-slot")).toBeInTheDocument();
     expect(screen.getByTestId("kudos-sidebar-slot")).toBeInTheDocument();
+  });
+
+  it("mounts KudosCreateInput inside the write input slot (Phase 4 T036) with the active locale", () => {
+    render(
+      <KudosBoardLayout
+        locale="en-US"
+        userName="Tester"
+        userImage={null}
+        unreadCount={0}
+      />,
+    );
+
+    const slot = screen.getByTestId("kudos-write-input-slot");
+    const trigger = screen.getByTestId("kudos-create-input-stub");
+    expect(slot).toContainElement(trigger);
+    expect(trigger).toHaveAttribute("data-locale", "en-US");
   });
 
   it("renders the global Footer (contentinfo landmark)", () => {
