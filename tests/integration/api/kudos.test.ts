@@ -8,7 +8,7 @@ vi.mock("@/src/lib/auth", () => ({
   auth: authMock,
 }));
 
-import { POST } from "@/app/api/kudos/route";
+import { GET, POST } from "@/app/api/kudos/route";
 import { prisma } from "@/src/lib/prisma";
 import { kudosService } from "@/src/services/kudos-service";
 import { clearAuthTables, createTestUser } from "@/tests/fixtures/users";
@@ -308,5 +308,307 @@ describe("POST /api/kudos (T034 route contract)", () => {
       where: { id: senderId },
     });
     expect(senderRow.kudosSentCount).toBe(1);
+  });
+});
+
+/**
+ * Phase 5 T039 — listFeed + GET /api/kudos.
+ *
+ * Seeds a deterministic feed (5 Kudos, 2 departments, 3 hashtags) and
+ * exercises cursor pagination, hashtag filter, department filter (Q-LB5 OR
+ * sender/receiver), and the AND composition of the two filters (Q-LB6).
+ */
+
+type FeedSeed = {
+  ownerId: string;
+  alphaDeptId: string;
+  betaDeptId: string;
+  hashtagDedicated: string;
+  hashtagTeamwork: string;
+  hashtagIdol: string;
+  kudoOldest: string;
+  kudoMid1: string;
+  kudoMid2: string;
+  kudoNewest: string;
+  kudoBetaOnly: string;
+};
+
+async function seedFeed(): Promise<FeedSeed> {
+  const alpha = await prisma.department.upsert({
+    where: { name: "FeedAlpha" },
+    create: { name: "FeedAlpha" },
+    update: {},
+  });
+  const beta = await prisma.department.upsert({
+    where: { name: "FeedBeta" },
+    create: { name: "FeedBeta" },
+    update: {},
+  });
+
+  const owner = await createTestUser({
+    id: "feed-owner",
+    email: "feed-owner@example.com",
+    name: "Owner",
+    departmentId: alpha.id,
+  });
+  const partnerAlpha = await createTestUser({
+    id: "feed-partner-alpha",
+    email: "feed-partner-alpha@example.com",
+    name: "Partner Alpha",
+    departmentId: alpha.id,
+  });
+  const partnerBeta = await createTestUser({
+    id: "feed-partner-beta",
+    email: "feed-partner-beta@example.com",
+    name: "Partner Beta",
+    departmentId: beta.id,
+  });
+
+  const dedicated = await prisma.hashtag.upsert({
+    where: { slug: "dedicated" },
+    create: { name: "Dedicated", slug: "dedicated" },
+    update: {},
+  });
+  const teamwork = await prisma.hashtag.upsert({
+    where: { slug: "teamwork" },
+    create: { name: "Teamwork", slug: "teamwork" },
+    update: {},
+  });
+  const idol = await prisma.hashtag.upsert({
+    where: { slug: "idol" },
+    create: { name: "Idol", slug: "idol" },
+    update: {},
+  });
+
+  // Create 5 kudos with deterministic createdAt for cursor assertions.
+  const baseTime = new Date("2025-10-01T00:00:00.000Z").getTime();
+  async function mkKudo(opts: {
+    id: string;
+    minutesAfter: number;
+    senderId: string;
+    receiverId: string;
+    hashtagIds: string[];
+  }) {
+    return prisma.kudo.create({
+      data: {
+        id: opts.id,
+        senderUserId: opts.senderId,
+        receiverUserId: opts.receiverId,
+        content: `content ${opts.id}`,
+        createdAt: new Date(baseTime + opts.minutesAfter * 60_000),
+        hashtags: {
+          create: opts.hashtagIds.map((hashtagId) => ({ hashtagId })),
+        },
+      },
+    });
+  }
+
+  await mkKudo({
+    id: "feed-kudo-oldest",
+    minutesAfter: 0,
+    senderId: owner.id,
+    receiverId: partnerAlpha.id,
+    hashtagIds: [dedicated.id],
+  });
+  await mkKudo({
+    id: "feed-kudo-mid-1",
+    minutesAfter: 10,
+    senderId: partnerAlpha.id,
+    receiverId: owner.id,
+    hashtagIds: [teamwork.id],
+  });
+  await mkKudo({
+    id: "feed-kudo-mid-2",
+    minutesAfter: 20,
+    senderId: owner.id,
+    receiverId: partnerBeta.id,
+    hashtagIds: [dedicated.id, teamwork.id],
+  });
+  await mkKudo({
+    id: "feed-kudo-newest",
+    minutesAfter: 30,
+    senderId: partnerBeta.id,
+    receiverId: owner.id,
+    hashtagIds: [idol.id, teamwork.id],
+  });
+  await mkKudo({
+    id: "feed-kudo-beta-only",
+    minutesAfter: 25,
+    senderId: partnerBeta.id,
+    receiverId: partnerBeta.id,
+    hashtagIds: [dedicated.id],
+  });
+
+  return {
+    ownerId: owner.id,
+    alphaDeptId: alpha.id,
+    betaDeptId: beta.id,
+    hashtagDedicated: dedicated.id,
+    hashtagTeamwork: teamwork.id,
+    hashtagIdol: idol.id,
+    kudoOldest: "feed-kudo-oldest",
+    kudoMid1: "feed-kudo-mid-1",
+    kudoMid2: "feed-kudo-mid-2",
+    kudoNewest: "feed-kudo-newest",
+    kudoBetaOnly: "feed-kudo-beta-only",
+  };
+}
+
+function getRequest(path: string): Request {
+  return new Request(`http://localhost${path}`, { method: "GET" });
+}
+
+describe("kudos-service.listFeed (T039 service contract)", () => {
+  beforeEach(async () => {
+    await clearKudoTables();
+    await clearAuthTables();
+    await prisma.department.deleteMany();
+    authMock.mockReset();
+  });
+
+  afterAll(async () => {
+    await clearKudoTables();
+    await clearAuthTables();
+    await prisma.department.deleteMany();
+    await prisma.$disconnect();
+  });
+
+  it("returns kudos sorted by (createdAt DESC, id DESC) with the limit + nextCursor", async () => {
+    const seed = await seedFeed();
+    const page = await kudosService.listFeed({}, { limit: 2 });
+    expect(page.items.map((k) => k.id)).toEqual([
+      seed.kudoNewest,
+      seed.kudoBetaOnly,
+    ]);
+    expect(page.nextCursor).not.toBeNull();
+    const [iso, id] = page.nextCursor!.split("|");
+    expect(id).toBe(seed.kudoBetaOnly);
+    expect(Number.isNaN(Date.parse(iso!))).toBe(false);
+  });
+
+  it("returns nextCursor=null when the page is the final page", async () => {
+    await seedFeed();
+    const page = await kudosService.listFeed({}, { limit: 50 });
+    expect(page.items.length).toBe(5);
+    expect(page.nextCursor).toBeNull();
+  });
+
+  it("cursor-paginates with `(createdAt, id) < cursor` semantics across pages", async () => {
+    const seed = await seedFeed();
+    const first = await kudosService.listFeed({}, { limit: 2 });
+    expect(first.items.map((k) => k.id)).toEqual([
+      seed.kudoNewest,
+      seed.kudoBetaOnly,
+    ]);
+    const second = await kudosService.listFeed({}, {
+      limit: 2,
+      cursor: first.nextCursor ?? undefined,
+    });
+    expect(second.items.map((k) => k.id)).toEqual([
+      seed.kudoMid2,
+      seed.kudoMid1,
+    ]);
+    const third = await kudosService.listFeed({}, {
+      limit: 2,
+      cursor: second.nextCursor ?? undefined,
+    });
+    expect(third.items.map((k) => k.id)).toEqual([seed.kudoOldest]);
+    expect(third.nextCursor).toBeNull();
+  });
+
+  it("filters by hashtag slug — only kudos tagged with the slug are returned", async () => {
+    const seed = await seedFeed();
+    const page = await kudosService.listFeed(
+      { hashtag: "dedicated" },
+      { limit: 50 },
+    );
+    expect(page.items.map((k) => k.id).sort()).toEqual(
+      [seed.kudoOldest, seed.kudoMid2, seed.kudoBetaOnly].sort(),
+    );
+  });
+
+  it("filters by department id — match when EITHER sender OR receiver is in the department (Q-LB5)", async () => {
+    const seed = await seedFeed();
+    const page = await kudosService.listFeed(
+      { dept: seed.betaDeptId },
+      { limit: 50 },
+    );
+    expect(page.items.map((k) => k.id).sort()).toEqual(
+      [seed.kudoMid2, seed.kudoNewest, seed.kudoBetaOnly].sort(),
+    );
+  });
+
+  it("ANDs hashtag + dept filters (Q-LB6) — both must hold for a kudo to appear", async () => {
+    const seed = await seedFeed();
+    const page = await kudosService.listFeed(
+      { hashtag: "dedicated", dept: seed.betaDeptId },
+      { limit: 50 },
+    );
+    expect(page.items.map((k) => k.id).sort()).toEqual(
+      [seed.kudoMid2, seed.kudoBetaOnly].sort(),
+    );
+  });
+
+  it("returns an empty page when no kudos match the filter", async () => {
+    await seedFeed();
+    const page = await kudosService.listFeed(
+      { hashtag: "no-such-slug" },
+      { limit: 50 },
+    );
+    expect(page.items).toEqual([]);
+    expect(page.nextCursor).toBeNull();
+  });
+});
+
+describe("GET /api/kudos (T039 route contract)", () => {
+  beforeEach(async () => {
+    await clearKudoTables();
+    await clearAuthTables();
+    await prisma.department.deleteMany();
+    authMock.mockReset();
+  });
+
+  afterAll(async () => {
+    await clearKudoTables();
+    await clearAuthTables();
+    await prisma.department.deleteMany();
+    await prisma.$disconnect();
+  });
+
+  it("returns 401 for an anonymous request (auth-gate carry-over from T028)", async () => {
+    authMock.mockResolvedValue(null);
+    const res = await GET(getRequest("/api/kudos"));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 when the cursor is malformed", async () => {
+    const seed = await seedFeed();
+    authMock.mockResolvedValue({ user: { id: seed.ownerId } });
+    const res = await GET(getRequest("/api/kudos?cursor=not-a-cursor"));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when limit exceeds the 1-50 range", async () => {
+    const seed = await seedFeed();
+    authMock.mockResolvedValue({ user: { id: seed.ownerId } });
+    const res = await GET(getRequest("/api/kudos?limit=999"));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 200 with `{ items, nextCursor }` shape on success", async () => {
+    const seed = await seedFeed();
+    authMock.mockResolvedValue({ user: { id: seed.ownerId } });
+    const res = await GET(getRequest("/api/kudos?limit=3"));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      items: { id: string }[];
+      nextCursor: string | null;
+    };
+    expect(body.items.map((k) => k.id)).toEqual([
+      seed.kudoNewest,
+      seed.kudoBetaOnly,
+      seed.kudoMid2,
+    ]);
+    expect(body.nextCursor).not.toBeNull();
   });
 });
