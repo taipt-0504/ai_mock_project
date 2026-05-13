@@ -94,12 +94,14 @@
 
 **Independent Test**: Anon visit `/sun-kudos` → redirect `/login`. Session expired mid-action → 401 → redirect.
 
-- [ ] T026 [P] [US7] [Test] Playwright `kudos-board-auth.spec.ts`: (a) anon visit `/sun-kudos` → redirect `/login` (US7 #1); (b) auth user visit → render full board (US7 #1 inverse); (c) session expired mid-action → API trả 401 → client redirect (US7 #3) | tests/e2e/kudos-board-auth.spec.ts
-- [ ] T027 [US7] [Logic] Verify `app/sun-kudos/page.tsx` từ T022 — `auth().catch(() => null)` pattern handles cả Auth.js exception + null session; redirect `/login` đúng | app/sun-kudos/page.tsx
-- [ ] T028 [US7] [Logic] Establish auth-gate pattern cho route handlers (template được consume by Phase 4/6/8): mỗi mutate handler call `auth()` đầu tiên, return 401 nếu null. Document pattern trong `.momorph/specs/MaZUn5xHXZ-sun-kudos-live-board/assets/auth-pattern.md` cho các phase sau tham khảo | .momorph/specs/MaZUn5xHXZ-sun-kudos-live-board/assets/auth-pattern.md
-- [ ] T029 [US7] [Test] Verify T026 GREEN; lint + typecheck clean | (no file)
+- [x] T026 [P] [US7] [Test] Playwright `kudos-board-auth.spec.ts`: (a) anon visit `/sun-kudos` → redirect `/login` (US7 #1); (b) auth user visit → render full board (US7 #1 inverse); (c) session expired mid-action → API trả 401 → client redirect (US7 #3) | tests/e2e/kudos-board-auth.spec.ts — **Shipped 2026-05-13**. 4 specs (raw redirect response + browser nav + auth render w/ all 6 board slots & `aria-current` link + stale-cookie expiry re-redirect). Case (c) implemented at page level: session row deleted → next server request 30x to `/login`. Mutate-API 401 path lands in Phase 4 (T030 d).
+- [x] T027 [US7] [Logic] Verify `app/sun-kudos/page.tsx` từ T022 — `auth().catch(() => null)` pattern handles cả Auth.js exception + null session; redirect `/login` đúng | app/sun-kudos/page.tsx — **Verified 2026-05-13**. Try/catch around `await auth()` with `logger.warn("auth.lookup-failed", …)` (A09) + `if (!session?.user) redirect("/login")` (A01). Unit suite `tests/unit/app/sun-kudos/page.test.tsx` already asserts anon-null redirect, auth-throw redirect, and authenticated render. No code change required.
+- [x] T028 [US7] [Logic] Establish auth-gate pattern cho route handlers (template được consume by Phase 4/6/8): mỗi mutate handler call `auth()` đầu tiên, return 401 nếu null. Document pattern trong `.momorph/specs/MaZUn5xHXZ-sun-kudos-live-board/assets/auth-pattern.md` cho các phase sau tham khảo | .momorph/specs/MaZUn5xHXZ-sun-kudos-live-board/assets/auth-pattern.md — **Shipped 2026-05-13**. Canonical template (try/catch `auth()`, 401 generic body, log denial, session-derived id, 403 for wrong role, rate-limit after gate) + client-side 401 handling (rollback optimistic UI, generic toast, redirect with `next` param) + anti-patterns list.
+- [x] T029 [US7] [Test] Verify T026 GREEN; lint + typecheck clean | (no file) — **Shipped 2026-05-13**. `npm run lint` clean; `tsc --noEmit` clean (`.next/dev` cache cleared first); Vitest **372/372 GREEN**; Playwright `kudos-board-auth.spec.ts` **4/4 GREEN** (14.2s).
 
 **Checkpoint**: US7 GREEN; auth gate verified ở page + pattern established cho mutate API.
+
+**✅ Phase 3 COMPLETE (2026-05-13)** — 4 tasks shipped. Auth gate now enforced at the `/sun-kudos` page layer with E2E + unit coverage; mutate-API auth-gate template documented for Phase 4/6/8 consumption.
 
 ---
 
