@@ -1,5 +1,13 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/src/lib/prisma";
-import type { Kudo, KudoAuthor } from "@/src/lib/kudos/types";
+import type {
+  Kudo,
+  KudoAuthor,
+  KudoCursor,
+  KudoFeedPage,
+  KudoFilter,
+} from "@/src/lib/kudos/types";
 
 /**
  * Kudo persistence boundary. Only this module touches the Prisma client for
@@ -17,6 +25,21 @@ type CreateKudoArgs = {
   imageUrls: string[];
 };
 
+type ListFeedArgs = {
+  filter: KudoFilter;
+  cursor: KudoCursor | null;
+  limit: number;
+};
+
+type PersistedKudo = Prisma.KudoGetPayload<{
+  include: {
+    sender: true;
+    receiver: true;
+    hashtags: { include: { hashtag: true } };
+    images: true;
+  };
+}>;
+
 function authorFromUser(
   user: {
     id: string;
@@ -32,6 +55,32 @@ function authorFromUser(
     image: user.image,
     title: user.title,
     departmentId: user.departmentId,
+  };
+}
+
+function kudoFromRow(row: PersistedKudo): Kudo {
+  return {
+    id: row.id,
+    content: row.content,
+    heartCount: row.heartCount,
+    createdAt: row.createdAt,
+    sender: authorFromUser(row.sender),
+    receiver: authorFromUser(row.receiver),
+    hashtags: row.hashtags.map(({ hashtag }) => ({
+      id: hashtag.id,
+      name: hashtag.name,
+      slug: hashtag.slug,
+    })),
+    images: row.images
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((image) => ({
+        id: image.id,
+        url: image.url,
+        width: image.width,
+        height: image.height,
+        order: image.order,
+      })),
   };
 }
 
@@ -74,25 +123,64 @@ export const kudosRepository = {
       return kudo;
     });
 
-    return {
-      id: created.id,
-      content: created.content,
-      heartCount: created.heartCount,
-      createdAt: created.createdAt,
-      sender: authorFromUser(created.sender),
-      receiver: authorFromUser(created.receiver),
-      hashtags: created.hashtags.map(({ hashtag }) => ({
-        id: hashtag.id,
-        name: hashtag.name,
-        slug: hashtag.slug,
-      })),
-      images: created.images.map((image) => ({
-        id: image.id,
-        url: image.url,
-        width: image.width,
-        height: image.height,
-        order: image.order,
-      })),
-    };
+    return kudoFromRow(created);
+  },
+
+  /**
+   * Cursor-paginated feed. Ordering is `(createdAt DESC, id DESC)` so cursor
+   * decoding is monotonic. Filter composition:
+   * - `hashtag` (slug) → kudos whose hashtag rows include the slug.
+   * - `dept` (departmentId) → kudos where sender OR receiver belongs to the
+   *   department (Q-LB5).
+   * - Hashtag + dept compose with AND (Q-LB6).
+   * The query fetches `limit + 1` rows to detect whether more pages exist
+   * without a second round-trip.
+   */
+  async listFeed(args: ListFeedArgs): Promise<KudoFeedPage> {
+    const { filter, cursor, limit } = args;
+
+    const where: Prisma.KudoWhereInput = {};
+    if (filter.hashtag) {
+      where.hashtags = {
+        some: { hashtag: { slug: filter.hashtag } },
+      };
+    }
+    if (filter.dept) {
+      where.OR = [
+        { sender: { departmentId: filter.dept } },
+        { receiver: { departmentId: filter.dept } },
+      ];
+    }
+    if (cursor) {
+      where.AND = [
+        {
+          OR: [
+            { createdAt: { lt: cursor.createdAt } },
+            { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+          ],
+        },
+      ];
+    }
+
+    const rows = await prisma.kudo.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      include: {
+        sender: true,
+        receiver: true,
+        hashtags: { include: { hashtag: true } },
+        images: true,
+      },
+    });
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const items = page.map(kudoFromRow);
+    const last = items[items.length - 1];
+    const nextCursor =
+      hasMore && last ? `${last.createdAt.toISOString()}|${last.id}` : null;
+
+    return { items, nextCursor };
   },
 };

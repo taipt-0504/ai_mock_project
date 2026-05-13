@@ -1,6 +1,11 @@
 import { kudosRepository } from "@/src/repositories/kudos-repository";
-import type { Kudo } from "@/src/lib/kudos/types";
-import { createKudoSchema } from "@/src/lib/validation/kudos";
+import type { Kudo, KudoFeedPage } from "@/src/lib/kudos/types";
+import {
+  createKudoSchema,
+  cursorSchema,
+  kudoFilterQuerySchema,
+  type KudoFilterQuery,
+} from "@/src/lib/validation/kudos";
 
 /**
  * Kudo service — Constitution II layer between route handlers and the
@@ -14,6 +19,13 @@ type ServiceSession = { user: { id: string } };
 function dedupe<T>(values: T[]): T[] {
   return Array.from(new Set(values));
 }
+
+type ListFeedFilter = Pick<KudoFilterQuery, "hashtag" | "dept">;
+
+type ListFeedOptions = {
+  cursor?: string;
+  limit?: number | string;
+};
 
 export const kudosService = {
   /**
@@ -29,6 +41,34 @@ export const kudosService = {
       content: parsed.content,
       hashtagIds: dedupe(parsed.hashtagIds),
       imageUrls: parsed.imageUrls,
+    });
+  },
+
+  /**
+   * Paginated feed. Accepts the raw query string shape so the route layer can
+   * forward `searchParams` directly; cursor is decoded via `cursorSchema`.
+   * Throws `ZodError` for malformed input.
+   */
+  async listFeed(
+    filter: ListFeedFilter,
+    options: ListFeedOptions = {},
+  ): Promise<KudoFeedPage> {
+    const parsedFilter = kudoFilterQuerySchema.parse({
+      hashtag: filter.hashtag,
+      dept: filter.dept,
+      cursor: options.cursor,
+      limit: options.limit ?? 20,
+    });
+    const decodedCursor = parsedFilter.cursor
+      ? cursorSchema.parse(parsedFilter.cursor)
+      : null;
+    return kudosRepository.listFeed({
+      filter: {
+        hashtag: parsedFilter.hashtag,
+        dept: parsedFilter.dept,
+      },
+      cursor: decodedCursor,
+      limit: parsedFilter.limit,
     });
   },
 };

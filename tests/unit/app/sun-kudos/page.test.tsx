@@ -22,6 +22,11 @@ vi.mock("@/src/services/notification-service", () => ({
   getUnreadCount: vi.fn(async () => 0),
 }));
 
+const listFeedMock = vi.fn(async () => ({ items: [], nextCursor: null }));
+vi.mock("@/src/services/kudos-service", () => ({
+  kudosService: { listFeed: listFeedMock },
+}));
+
 vi.mock("@/src/components/sun-kudos/KudosBoardLayout", () => ({
   default: ({ locale }: { locale: string }) => (
     <div data-testid="kudos-board-layout-stub" data-locale={locale}>
@@ -34,6 +39,7 @@ describe("app/sun-kudos/page (Phase 2 T022 — auth gate + skeleton render)", ()
   beforeEach(() => {
     redirectMock.mockClear();
     authMock.mockClear();
+    listFeedMock.mockClear();
   });
 
   afterEach(() => {

@@ -5,7 +5,9 @@ import KudosBoardLayout from "@/src/components/sun-kudos/KudosBoardLayout";
 import { auth } from "@/src/lib/auth";
 import { getSaaLocale } from "@/src/lib/cookies/saa-locale";
 import { DEFAULT_LOCALE, type SupportedLocale } from "@/src/lib/i18n/types";
+import type { KudoFeedPage } from "@/src/lib/kudos/types";
 import { logger } from "@/src/lib/logger";
+import { kudosService } from "@/src/services/kudos-service";
 import { getUnreadCount } from "@/src/services/notification-service";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +36,14 @@ export default async function SunKudosPage({
     redirect("/login");
   }
 
-  // Read filter slot for future Phase 5/7 use; intentionally unused at skeleton.
-  if (searchParams) {
-    await searchParams;
-  }
+  const resolvedParams = (await searchParams) ?? {};
+  const hashtagParam = resolvedParams.hashtag;
+  const deptParam = resolvedParams.dept;
+  const hashtagFilter = Array.isArray(hashtagParam) ? hashtagParam[0] : hashtagParam;
+  const deptFilter = Array.isArray(deptParam) ? deptParam[0] : deptParam;
 
   const userId = session.user.id;
-  const [locale, unreadCount] = await Promise.all([
+  const [locale, unreadCount, feedPage] = await Promise.all([
     getSaaLocale().catch((err) => {
       logger.warn("locale.cookie-read-failed", {
         message: err instanceof Error ? err.message : "unknown",
@@ -55,6 +58,17 @@ export default async function SunKudosPage({
           return 0;
         })
       : Promise.resolve(0),
+    kudosService
+      .listFeed(
+        { hashtag: hashtagFilter, dept: deptFilter },
+        { limit: 20 },
+      )
+      .catch((err): KudoFeedPage => {
+        logger.warn("kudos.list-feed-failed", {
+          message: err instanceof Error ? err.message : "unknown",
+        });
+        return { items: [], nextCursor: null };
+      }),
   ]);
 
   return (
@@ -63,6 +77,8 @@ export default async function SunKudosPage({
       userName={session.user.name}
       userImage={session.user.image}
       unreadCount={unreadCount}
+      feedInitialItems={feedPage.items}
+      feedInitialCursor={feedPage.nextCursor}
     />
   );
 }
