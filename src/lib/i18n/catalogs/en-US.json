@@ -85,5 +85,17 @@
   "kudos.write.input.aria_label": "Write a new Kudos",
   "kudos.write.stub.title": "Write Kudos",
   "kudos.write.stub.description": "The Write Kudos dialog is in development. Please check back soon!",
-  "kudos.write.stub.back": "Back to the Kudos board"
+  "kudos.write.stub.back": "Back to the Kudos board",
+
+  "kudos.feed.empty": "No Kudos yet.",
+  "kudos.feed.heading": "All Kudos",
+  "kudos.feed.loading_more": "Loading more Kudos…",
+  "kudos.card.send_icon_alt": "Sending Kudos to",
+  "kudos.card.gallery_thumb_alt": "Attached image",
+  "kudos.card.hashtag_overflow": "+{count}",
+  "kudos.card.detail_link": "View details",
+  "kudos.lightbox.close": "Close",
+  "kudos.lightbox.image_alt": "Kudos image",
+  "kudos.profile_preview.title_default": "Sunner",
+  "kudos.profile_preview.department_default": "Sun*"
 }

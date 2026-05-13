@@ -6,7 +6,9 @@ import NotificationBell from "@/src/components/home/NotificationBell";
 import ProfileButton from "@/src/components/home/ProfileButton";
 import Header from "@/src/components/header/Header";
 import KudosCreateInput from "@/src/components/sun-kudos/KudosCreateInput";
+import KudosFeed from "@/src/components/sun-kudos/KudosFeed";
 import type { SupportedLocale } from "@/src/lib/i18n/types";
+import type { Kudo } from "@/src/lib/kudos/types";
 
 const CURRENT_PATH = "/sun-kudos";
 
@@ -15,6 +17,8 @@ type Props = {
   userName?: string | null;
   userImage?: string | null;
   unreadCount: number;
+  feedInitialItems?: Kudo[];
+  feedInitialCursor?: string | null;
 };
 
 /**
@@ -30,6 +34,8 @@ export default function KudosBoardLayout({
   userName,
   userImage,
   unreadCount,
+  feedInitialItems = [],
+  feedInitialCursor = null,
 }: Props) {
   return (
     <main className="relative min-h-screen w-full overflow-x-clip bg-saa-page text-saa-page-fg">
@@ -108,6 +114,11 @@ export default function KudosBoardLayout({
             <h2 id="kudos-feed-heading" className="sr-only">
               All Kudos
             </h2>
+            <KudosFeed
+              initialItems={feedInitialItems}
+              initialCursor={feedInitialCursor}
+              locale={locale}
+            />
           </section>
 
           <aside

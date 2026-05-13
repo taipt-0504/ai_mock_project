@@ -85,5 +85,17 @@
   "kudos.write.input.aria_label": "Viết Kudos mới",
   "kudos.write.stub.title": "Viết Kudos",
   "kudos.write.stub.description": "Hộp thoại Viết Kudos đang được phát triển. Vui lòng quay lại sau nhé!",
-  "kudos.write.stub.back": "Quay lại bảng Kudos"
+  "kudos.write.stub.back": "Quay lại bảng Kudos",
+
+  "kudos.feed.empty": "Hiện tại chưa có Kudos nào.",
+  "kudos.feed.heading": "Tất cả Kudos",
+  "kudos.feed.loading_more": "Đang tải thêm Kudos…",
+  "kudos.card.send_icon_alt": "Gửi Kudos đến",
+  "kudos.card.gallery_thumb_alt": "Ảnh đính kèm",
+  "kudos.card.hashtag_overflow": "+{count}",
+  "kudos.card.detail_link": "Xem chi tiết",
+  "kudos.lightbox.close": "Đóng",
+  "kudos.lightbox.image_alt": "Ảnh Kudos",
+  "kudos.profile_preview.title_default": "Sunner",
+  "kudos.profile_preview.department_default": "Sun*"
 }
