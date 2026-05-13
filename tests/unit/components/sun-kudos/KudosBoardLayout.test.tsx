@@ -23,6 +23,24 @@ vi.mock("@/src/components/sun-kudos/KudosCreateInput", () => ({
   ),
 }));
 
+vi.mock("@/src/components/sun-kudos/KudosFeed", () => ({
+  default: ({
+    initialItems,
+    initialCursor,
+  }: {
+    initialItems: { id: string }[];
+    initialCursor: string | null;
+  }) => (
+    <div
+      data-testid="kudos-feed-stub"
+      data-items={initialItems.length}
+      data-cursor={initialCursor ?? "null"}
+    >
+      feed
+    </div>
+  ),
+}));
+
 import KudosBoardLayout from "@/src/components/sun-kudos/KudosBoardLayout";
 
 /**
@@ -93,6 +111,44 @@ describe("KudosBoardLayout — Phase 2 skeleton", () => {
     const trigger = screen.getByTestId("kudos-create-input-stub");
     expect(slot).toContainElement(trigger);
     expect(trigger).toHaveAttribute("data-locale", "en-US");
+  });
+
+  it("mounts KudosFeed inside the feed slot (Phase 5 T056) with the forwarded initial data", () => {
+    render(
+      <KudosBoardLayout
+        locale="vi-VN"
+        userName="Tester"
+        userImage={null}
+        unreadCount={0}
+        feedInitialItems={
+          // @ts-expect-error — stubbed Kudo shape: only `id` is read by the mock.
+          [{ id: "k-1" }, { id: "k-2" }]
+        }
+        feedInitialCursor="2025-10-30T10:00:00.000Z|k-1"
+      />,
+    );
+    const slot = screen.getByTestId("kudos-feed-slot");
+    const feed = screen.getByTestId("kudos-feed-stub");
+    expect(slot).toContainElement(feed);
+    expect(feed).toHaveAttribute("data-items", "2");
+    expect(feed).toHaveAttribute(
+      "data-cursor",
+      "2025-10-30T10:00:00.000Z|k-1",
+    );
+  });
+
+  it("defaults the feed to an empty initial page when the page does not pass data (server skeleton path)", () => {
+    render(
+      <KudosBoardLayout
+        locale="vi-VN"
+        userName="Tester"
+        userImage={null}
+        unreadCount={0}
+      />,
+    );
+    const feed = screen.getByTestId("kudos-feed-stub");
+    expect(feed).toHaveAttribute("data-items", "0");
+    expect(feed).toHaveAttribute("data-cursor", "null");
   });
 
   it("renders the global Footer (contentinfo landmark)", () => {
